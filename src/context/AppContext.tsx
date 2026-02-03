@@ -20,6 +20,7 @@ interface AppContextValue {
   addRecipes: (recipes: Recipe[]) => Promise<void>;
   removeRecipe: (recipeId: string) => Promise<void>;
   updateRecipeLastUsed: (recipeId: string, date: string) => Promise<void>;
+  toggleFavorite: (recipeId: string) => Promise<void>;
   // Calendar actions
   assignRecipeToDay: (date: string, recipeId: string) => Promise<void>;
   clearDay: (date: string) => Promise<void>;
@@ -209,6 +210,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [saveWithRetry]
   );
 
+  const toggleFavorite = useCallback(
+    async (recipeId: string) => {
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        recipes: currentState.recipes.map((r) =>
+          r.id === recipeId ? { ...r, isFavorite: !r.isFavorite } : r
+        ),
+      }));
+    },
+    [saveWithRetry]
+  );
+
   const removeRecipe = useCallback(
     async (recipeId: string) => {
       await saveWithRetry((currentState) => ({
@@ -325,8 +338,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const applyMealPlan = useCallback(
     async (plan: Array<{ date: string; recipe: Recipe }>) => {
       await saveWithRetry((currentState) => {
-        // Add all new recipes
-        const newRecipes = [...currentState.recipes, ...plan.map((p) => p.recipe)];
+        // Add new recipes, avoiding duplicates
+        const existingIds = new Set(currentState.recipes.map(r => r.id));
+        const newRecipes = [
+          ...currentState.recipes,
+          ...plan.map(p => p.recipe).filter(r => !existingIds.has(r.id))
+        ];
 
         // Update calendar with all assignments
         let newCalendar = [...currentState.calendar];
@@ -376,6 +393,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addRecipes,
         removeRecipe,
         updateRecipeLastUsed,
+        toggleFavorite,
         assignRecipeToDay,
         clearDay,
         swapRecipes,

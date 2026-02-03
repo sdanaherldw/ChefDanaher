@@ -124,6 +124,8 @@ export interface Recipe {
   suitableFor?: string[]; // member IDs
   // Usage tracking: set when groceries are purchased for a day with this recipe
   lastUsedAt?: string; // ISO date string
+  // Favorites: mark recipe as a keeper
+  isFavorite?: boolean;
 }
 
 // Helper: Check if recipe has protein variants
