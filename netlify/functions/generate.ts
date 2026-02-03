@@ -7,6 +7,30 @@ import {
   unauthorizedResponse,
 } from './utils/auth';
 
+// Household members with dietary restrictions
+const HOUSEHOLD = {
+  shane: {
+    name: 'Shane',
+    restrictions: ['no-meat', 'no-fish', 'no-dairy', 'no-eggs', 'no-honey'],
+    description: 'Vegan - no meat, fish, dairy, eggs, or honey'
+  },
+  lauren: {
+    name: 'Lauren',
+    restrictions: ['no-dairy'],
+    description: 'Dairy-free - eats meat, fish, and eggs but NO dairy'
+  },
+  tucker: {
+    name: 'Tucker',
+    restrictions: [],
+    description: 'No restrictions - eats everything'
+  },
+  brady: {
+    name: 'Brady',
+    restrictions: ['no-dairy', 'no-eggs'],
+    description: 'Dairy-free and egg-free - eats meat and fish but NO dairy or eggs'
+  }
+};
+
 const StoreSectionSchema = z.enum([
   'produce',
   'meat',
@@ -42,37 +66,94 @@ const RecipeSchema = z.object({
   dietaryInfo: z.object({
     isVegan: z.boolean(),
     isDairyFree: z.boolean(),
+    isEggFree: z.boolean(),
     hasCheese: z.boolean(),
   }),
   equipment: z.array(z.string()),
+  suitableFor: z.array(z.string()),
   createdAt: z.string(),
 });
 
 interface GenerateRequest {
   mealType: 'dinner' | 'lunch' | 'breakfast';
+  diners: string[];
   cuisine?: string;
   mainIngredient?: string;
-  servings: number;
   maxTime?: number;
 }
 
-function buildPrompt(request: GenerateRequest): string {
+function buildDietaryConstraints(diners: string[]): { constraints: string; isVegan: boolean; isDairyFree: boolean; isEggFree: boolean } {
+  let isVegan = false;
+  let isDairyFree = false;
+  let isEggFree = false;
+
+  const dinerDetails: string[] = [];
+
+  for (const dinerId of diners) {
+    const diner = HOUSEHOLD[dinerId as keyof typeof HOUSEHOLD];
+    if (!diner) continue;
+
+    dinerDetails.push(`- ${diner.name}: ${diner.description}`);
+
+    if (diner.restrictions.includes('no-meat') && diner.restrictions.includes('no-fish')) {
+      isVegan = true; // If no meat and no fish, treat as vegan requirement
+    }
+    if (diner.restrictions.includes('no-dairy')) {
+      isDairyFree = true;
+    }
+    if (diner.restrictions.includes('no-eggs')) {
+      isEggFree = true;
+    }
+  }
+
+  // If vegan, it implies dairy-free and egg-free
+  if (isVegan) {
+    isDairyFree = true;
+    isEggFree = true;
+  }
+
+  let constraints = `DINERS AND THEIR DIETARY REQUIREMENTS:\n${dinerDetails.join('\n')}\n\n`;
+
+  constraints += 'COMBINED DIETARY REQUIREMENTS (recipe MUST satisfy ALL of these):\n';
+
+  if (isVegan) {
+    constraints += '- FULLY VEGAN: No meat, poultry, fish, seafood, dairy, eggs, honey, or any animal products\n';
+  } else {
+    if (isDairyFree) {
+      constraints += '- DAIRY-FREE: No milk, cheese, butter, cream, yogurt, or any dairy products\n';
+    }
+    if (isEggFree) {
+      constraints += '- EGG-FREE: No eggs or egg-based ingredients (mayo, some pastas, etc.)\n';
+    }
+    if (!isDairyFree && !isEggFree) {
+      constraints += '- No dietary restrictions - all ingredients allowed\n';
+    }
+  }
+
+  return { constraints, isVegan, isDairyFree, isEggFree };
+}
+
+function buildPrompt(request: GenerateRequest): { prompt: string; dietary: ReturnType<typeof buildDietaryConstraints> } {
   const maxTime = request.maxTime || 40;
+  const servings = request.diners.length;
+  const dietary = buildDietaryConstraints(request.diners);
 
-  return `You are a recipe generator for a family dinner planning app. Generate a recipe that meets ALL of the following constraints:
+  const prompt = `You are a recipe generator for a family dinner planning app. Generate a recipe that meets ALL requirements below.
 
-DIETARY REQUIREMENTS (MANDATORY):
-- Shane: STRICTLY VEGAN (no meat, dairy, eggs, honey, or any animal products)
-- Lauren: Dairy-free (no milk, cheese, butter, cream, or dairy products)
-- Tucker: Can have cheese, but the recipe must work for Shane and Lauren too
+${dietary.constraints}
 
-This means the recipe MUST be fully vegan. No exceptions.
-
-EQUIPMENT AVAILABLE:
-- Joule oven (countertop convection oven with precise temperature control)
-- Vitamix blender
-- Stovetop (gas burners)
-- Standard kitchen tools (knives, pans, pots, etc.)
+EQUIPMENT AVAILABLE (in order of preference - use higher-preference items when possible):
+1. **Breville Joule Oven** (PREFERRED) - Countertop convection oven with precise temperature control. Use this for roasting, baking, sheet pan meals.
+2. **Vitamix** - High-powered blender for sauces, soups, smoothies, dressings.
+3. **Rice Cooker** - ALWAYS use this for rice. Never cook rice on the stovetop.
+4. **Stovetop** (gas burners) with:
+   - Large non-stick frying pan (Teflon-style)
+   - Medium frying pan
+   - Small Japanese carbon steel pan
+   - Japanese carbon steel wok (great for stir-fry)
+   - Stainless steel pasta pot
+5. **Microwave** - Good for quick tasks like steaming sweet potatoes, reheating, softening vegetables.
+6. **Wall Oven** (LEAST PREFERRED) - Only use if the Joule can't handle the job (e.g., very large items).
 
 TIME CONSTRAINT:
 - Maximum total time: ${maxTime} minutes (from start to food on table)
@@ -82,15 +163,15 @@ REQUEST DETAILS:
 - Meal type: ${request.mealType}
 ${request.cuisine ? `- Cuisine style: ${request.cuisine}` : ''}
 ${request.mainIngredient ? `- Feature this ingredient: ${request.mainIngredient}` : ''}
-- Servings: ${request.servings}
+- Servings: ${servings} (cooking for: ${request.diners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean).join(', ')})
 
 RESPONSE FORMAT:
 Return a JSON object matching this exact structure:
 {
-  "id": "unique-id-string",
+  "id": "unique-id-string-${Date.now()}",
   "name": "Recipe Name",
   "description": "Brief appetizing description",
-  "servings": ${request.servings},
+  "servings": ${servings},
   "totalTime": <number in minutes, must be <= ${maxTime}>,
   "ingredients": [
     {
@@ -102,27 +183,34 @@ Return a JSON object matching this exact structure:
   ],
   "steps": [
     {
-      "instruction": "Clear step instruction",
-      "duration": <minutes for this step>,
-      "parallel": ["step-ids that can run simultaneously"] // optional
+      "instruction": "Detailed step instruction - specific enough that someone can follow without questions",
+      "duration": <minutes for this step>
     }
   ],
-  "tags": ["vegan", "dairy-free", ...relevant tags],
+  "tags": ["relevant", "tags", "for", "filtering"],
   "dietaryInfo": {
-    "isVegan": true,
-    "isDairyFree": true,
+    "isVegan": ${dietary.isVegan},
+    "isDairyFree": ${dietary.isDairyFree},
+    "isEggFree": ${dietary.isEggFree},
     "hasCheese": false
   },
-  "equipment": ["list of equipment used"],
+  "equipment": ["list of equipment used from the available equipment"],
+  "suitableFor": ${JSON.stringify(request.diners)},
   "createdAt": "${new Date().toISOString()}"
 }
 
-IMPORTANT:
-- dietaryInfo.isVegan MUST be true
-- dietaryInfo.isDairyFree MUST be true
-- dietaryInfo.hasCheese MUST be false
+CRITICAL REQUIREMENTS:
+- dietaryInfo.isVegan MUST be ${dietary.isVegan}
+- dietaryInfo.isDairyFree MUST be ${dietary.isDairyFree}
+- dietaryInfo.isEggFree MUST be ${dietary.isEggFree}
+- dietaryInfo.hasCheese MUST be false${dietary.isDairyFree ? ' (dairy-free requirement)' : ''}
 - totalTime MUST be <= ${maxTime}
+- Steps must be detailed enough that someone can follow without asking questions
+- Prefer Joule Oven over wall oven
+- ALWAYS use rice cooker for rice
 - Return ONLY the JSON object, no other text`;
+
+  return { prompt, dietary };
 }
 
 export default async function handler(request: Request, context: Context) {
@@ -146,14 +234,20 @@ export default async function handler(request: Request, context: Context) {
 
   try {
     const body: GenerateRequest = await request.json();
-    const { mealType, cuisine, mainIngredient, servings, maxTime } = body;
+    const { mealType, diners, cuisine, mainIngredient, maxTime } = body;
 
-    if (!mealType || !servings) {
-      return createAuthResponse(400, { error: 'mealType and servings required' });
+    if (!mealType || !diners || diners.length === 0) {
+      return createAuthResponse(400, { error: 'mealType and at least one diner required' });
+    }
+
+    // Validate diners
+    const validDiners = diners.filter(id => id in HOUSEHOLD);
+    if (validDiners.length === 0) {
+      return createAuthResponse(400, { error: 'No valid diners selected' });
     }
 
     const openai = new OpenAI({ apiKey });
-    const prompt = buildPrompt(body);
+    const { prompt, dietary } = buildPrompt({ ...body, diners: validDiners });
 
     let attempts = 0;
     const maxAttempts = 3;
@@ -167,7 +261,7 @@ export default async function handler(request: Request, context: Context) {
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful recipe generator. Always respond with valid JSON only.',
+            content: 'You are a helpful recipe generator. Always respond with valid JSON only. Generate detailed, specific instructions.',
           },
           {
             role: 'user',
@@ -189,14 +283,24 @@ export default async function handler(request: Request, context: Context) {
         const parsed = JSON.parse(content);
         const validated = RecipeSchema.parse(parsed);
 
-        // Additional validation
-        if (!validated.dietaryInfo.isVegan) {
-          lastError = 'Recipe is not vegan';
+        // Validate dietary requirements match what we requested
+        if (dietary.isVegan && !validated.dietaryInfo.isVegan) {
+          lastError = 'Recipe is not vegan but vegan was required';
           continue;
         }
 
-        if (!validated.dietaryInfo.isDairyFree) {
-          lastError = 'Recipe is not dairy-free';
+        if (dietary.isDairyFree && !validated.dietaryInfo.isDairyFree) {
+          lastError = 'Recipe is not dairy-free but dairy-free was required';
+          continue;
+        }
+
+        if (dietary.isEggFree && !validated.dietaryInfo.isEggFree) {
+          lastError = 'Recipe is not egg-free but egg-free was required';
+          continue;
+        }
+
+        if (dietary.isDairyFree && validated.dietaryInfo.hasCheese) {
+          lastError = 'Recipe has cheese but dairy-free was required';
           continue;
         }
 

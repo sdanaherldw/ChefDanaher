@@ -9,6 +9,53 @@ export interface AuthState {
   isLoading: boolean;
 }
 
+// Household Members
+export interface HouseholdMember {
+  id: string;
+  name: string;
+  restrictions: DietaryRestriction[];
+}
+
+export type DietaryRestriction =
+  | 'no-meat'
+  | 'no-fish'
+  | 'no-dairy'
+  | 'no-eggs'
+  | 'no-honey';
+
+// Predefined household
+export const HOUSEHOLD: HouseholdMember[] = [
+  {
+    id: 'shane',
+    name: 'Shane',
+    restrictions: ['no-meat', 'no-fish', 'no-dairy', 'no-eggs', 'no-honey'] // Vegan
+  },
+  {
+    id: 'lauren',
+    name: 'Lauren',
+    restrictions: ['no-dairy'] // Dairy-free, eats meat/fish/eggs
+  },
+  {
+    id: 'tucker',
+    name: 'Tucker',
+    restrictions: [] // No restrictions
+  },
+  {
+    id: 'brady',
+    name: 'Brady',
+    restrictions: ['no-dairy', 'no-eggs'] // Dairy-free and egg-free
+  },
+];
+
+// Equipment preferences (in order of preference)
+export const EQUIPMENT_PREFERENCES = [
+  { id: 'joule', name: 'Breville Joule Oven', description: 'Countertop convection oven with precise temperature control' },
+  { id: 'vitamix', name: 'Vitamix', description: 'High-powered blender for sauces, soups, smoothies' },
+  { id: 'stovetop', name: 'Stovetop', description: 'Gas burners' },
+  { id: 'rice-cooker', name: 'Rice Cooker', description: 'Always use for rice' },
+  { id: 'wall-oven', name: 'Wall Oven', description: 'Standard oven (use only if necessary)' },
+];
+
 // Recipe Types
 export interface Ingredient {
   name: string;
@@ -44,10 +91,13 @@ export interface Recipe {
   dietaryInfo: {
     isVegan: boolean;
     isDairyFree: boolean;
+    isEggFree: boolean;
     hasCheese: boolean;
   };
   equipment: string[];
   createdAt: string;
+  // New: who this recipe works for
+  suitableFor?: string[]; // member IDs
 }
 
 // Calendar Types
@@ -87,9 +137,9 @@ export interface ConflictResponse {
 // Generation Types
 export interface GenerateRequest {
   mealType: 'dinner' | 'lunch' | 'breakfast';
+  diners: string[]; // member IDs
   cuisine?: string;
   mainIngredient?: string;
-  servings: number;
   maxTime?: number;
 }
 

@@ -2,28 +2,67 @@ import { useState, type FormEvent } from 'react';
 import { api } from '../../api/client';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../UI/Button';
+import { HOUSEHOLD } from '../../types';
 import type { GenerateRequest } from '../../types';
 
 export function GenerateForm() {
   const { addRecipe, addToast } = useAppState();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<GenerateRequest>({
-    mealType: 'dinner',
+  const [selectedDiners, setSelectedDiners] = useState<string[]>(
+    HOUSEHOLD.map((m) => m.id) // All selected by default
+  );
+  const [formData, setFormData] = useState({
+    mealType: 'dinner' as GenerateRequest['mealType'],
     cuisine: '',
     mainIngredient: '',
-    servings: 3,
     maxTime: 40,
   });
 
+  const toggleDiner = (dinerId: string) => {
+    setSelectedDiners((prev) =>
+      prev.includes(dinerId)
+        ? prev.filter((id) => id !== dinerId)
+        : [...prev, dinerId]
+    );
+  };
+
+  // Calculate dietary summary based on selected diners
+  const getDietarySummary = () => {
+    if (selectedDiners.length === 0) return '';
+
+    const hasShane = selectedDiners.includes('shane');
+    const hasLauren = selectedDiners.includes('lauren');
+    const hasBrady = selectedDiners.includes('brady');
+
+    if (hasShane) {
+      return 'Vegan recipe (for Shane)';
+    }
+    if (hasBrady) {
+      return 'Dairy-free & egg-free (for Brady)';
+    }
+    if (hasLauren) {
+      return 'Dairy-free (for Lauren)';
+    }
+    return 'No dietary restrictions';
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (selectedDiners.length === 0) {
+      addToast('Select at least one diner', 'error');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { recipe } = await api.generateRecipe({
-        ...formData,
+        mealType: formData.mealType,
+        diners: selectedDiners,
         cuisine: formData.cuisine || undefined,
         mainIngredient: formData.mainIngredient || undefined,
+        maxTime: formData.maxTime,
       });
       await addRecipe(recipe);
       addToast(`Generated: ${recipe.name}`, 'success');
@@ -47,6 +86,41 @@ export function GenerateForm() {
 
       <form onSubmit={handleSubmit} className="generate-form">
         <div className="form-group">
+          <label className="form-label">Who's Eating?</label>
+          <div className="diner-checkboxes">
+            {HOUSEHOLD.map((member) => {
+              const isSelected = selectedDiners.includes(member.id);
+              const restrictionLabel =
+                member.restrictions.length === 0
+                  ? 'No restrictions'
+                  : member.restrictions.length >= 4
+                  ? 'Vegan'
+                  : member.restrictions.includes('no-eggs')
+                  ? 'Dairy & egg-free'
+                  : 'Dairy-free';
+
+              return (
+                <label
+                  key={member.id}
+                  className={`diner-checkbox ${isSelected ? 'selected' : ''}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleDiner(member.id)}
+                  />
+                  <span className="diner-name">{member.name}</span>
+                  <span className="diner-restriction">{restrictionLabel}</span>
+                </label>
+              );
+            })}
+          </div>
+          {selectedDiners.length > 0 && (
+            <p className="dietary-summary">{getDietarySummary()}</p>
+          )}
+        </div>
+
+        <div className="form-group">
           <label htmlFor="mealType" className="form-label">
             Meal Type
           </label>
@@ -67,46 +141,24 @@ export function GenerateForm() {
           </select>
         </div>
 
-        <div className="generate-options">
-          <div className="form-group">
-            <label htmlFor="servings" className="form-label">
-              Servings
-            </label>
-            <input
-              id="servings"
-              type="number"
-              className="form-input"
-              value={formData.servings}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  servings: parseInt(e.target.value) || 3,
-                }))
-              }
-              min={1}
-              max={10}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="maxTime" className="form-label">
-              Max Time (min)
-            </label>
-            <input
-              id="maxTime"
-              type="number"
-              className="form-input"
-              value={formData.maxTime}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  maxTime: parseInt(e.target.value) || 40,
-                }))
-              }
-              min={15}
-              max={120}
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="maxTime" className="form-label">
+            Max Time (min)
+          </label>
+          <input
+            id="maxTime"
+            type="number"
+            className="form-input"
+            value={formData.maxTime}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                maxTime: parseInt(e.target.value) || 40,
+              }))
+            }
+            min={15}
+            max={120}
+          />
         </div>
 
         <div className="form-group">
@@ -147,8 +199,14 @@ export function GenerateForm() {
           />
         </div>
 
-        <Button type="submit" disabled={isLoading} style={{ width: '100%' }}>
-          {isLoading ? 'Generating...' : 'Generate Recipe'}
+        <Button
+          type="submit"
+          disabled={isLoading || selectedDiners.length === 0}
+          style={{ width: '100%' }}
+        >
+          {isLoading
+            ? 'Generating...'
+            : `Generate for ${selectedDiners.length} ${selectedDiners.length === 1 ? 'person' : 'people'}`}
         </Button>
 
         {isLoading && (
@@ -160,7 +218,7 @@ export function GenerateForm() {
               marginTop: 'var(--space-sm)',
             }}
           >
-            Creating a vegan, dairy-free recipe...
+            Creating a {getDietarySummary().toLowerCase() || 'custom'} recipe...
           </p>
         )}
       </form>

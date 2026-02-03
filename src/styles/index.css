@@ -507,6 +507,63 @@ h4 { font-size: 1.25rem; }
   gap: var(--space-md);
 }
 
+/* Diner Checkboxes */
+.diner-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.diner-checkbox {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background-color: white;
+}
+
+.diner-checkbox:hover {
+  border-color: var(--color-teal);
+}
+
+.diner-checkbox.selected {
+  border-color: var(--color-teal);
+  background-color: var(--color-mint);
+}
+
+.diner-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.diner-name {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+}
+
+.diner-restriction {
+  font-size: 0.75rem;
+  color: var(--color-gray);
+  margin-top: 2px;
+}
+
+.dietary-summary {
+  margin-top: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-teal);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  text-align: center;
+  font-weight: 700;
+}
+
 /* Toast */
 .toast-container {
   position: fixed;
