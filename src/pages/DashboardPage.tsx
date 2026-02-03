@@ -16,6 +16,8 @@ import { RecipeDetail } from '../components/Recipe/RecipeDetail';
 import { RecipeCard } from '../components/Recipe/RecipeCard';
 import { GroceryList } from '../components/Grocery/GroceryList';
 import { GenerateForm } from '../components/Generate/GenerateForm';
+import { AutoPlanForm } from '../components/Generate/AutoPlanForm';
+import { CollapsibleCard } from '../components/UI/CollapsibleCard';
 import { useAppState } from '../context/AppContext';
 import type { Recipe, DragData, DropData } from '../types';
 
@@ -122,8 +124,15 @@ export function DashboardPage() {
       >
         <div className="dashboard">
           <aside className="sidebar">
-            <GenerateForm />
-            <RecipeList onRecipeClick={handleRecipeClick} />
+            <CollapsibleCard id="auto-plan" title="Auto-Generate Meal Plan" defaultOpen={false}>
+              <AutoPlanForm />
+            </CollapsibleCard>
+            <CollapsibleCard id="generate" title="Generate Recipe" defaultOpen={true}>
+              <GenerateForm />
+            </CollapsibleCard>
+            <CollapsibleCard id="recipes" title="Recipes" defaultOpen={true}>
+              <RecipeList onRecipeClick={handleRecipeClick} />
+            </CollapsibleCard>
           </aside>
 
           <section className="main-section">

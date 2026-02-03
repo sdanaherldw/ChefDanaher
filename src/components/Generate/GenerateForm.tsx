@@ -84,9 +84,6 @@ export function GenerateForm() {
   };
 
   return (
-    <div className="sidebar-section">
-      <h3 className="sidebar-title">Generate Recipe</h3>
-
       <form onSubmit={handleSubmit} className="generate-form">
         <div className="form-group">
           <label className="form-label">Who's Eating?</label>
@@ -244,6 +241,5 @@ export function GenerateForm() {
           </p>
         )}
       </form>
-    </div>
   );
 }

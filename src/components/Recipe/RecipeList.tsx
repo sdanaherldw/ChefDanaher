@@ -35,9 +35,7 @@ export function RecipeList({ onRecipeClick }: RecipeListProps) {
   }, [state.recipes, search, tagFilter]);
 
   return (
-    <div className="sidebar-section">
-      <h3 className="sidebar-title">Recipes</h3>
-
+    <div>
       <input
         type="text"
         className="form-input search-input"

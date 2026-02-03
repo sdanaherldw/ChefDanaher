@@ -149,6 +149,18 @@ export interface GenerateResponse {
   recipe: Recipe;
 }
 
+// Meal Plan Generation Types
+export interface GeneratePlanRequest {
+  diners: string[];
+  numberOfDays: number;
+  targetDates: string[];
+}
+
+export interface GeneratePlanResponse {
+  plan: Array<{ date: string; recipe: Recipe }>;
+  sharedIngredients: string[];
+}
+
 // Drag and Drop Types
 export type DragSource = 'recipe-list' | 'calendar';
 

@@ -23,6 +23,8 @@ interface AppContextValue {
   clearDay: (date: string) => Promise<void>;
   swapRecipes: (date1: string, date2: string) => Promise<void>;
   toggleGroceriesPurchased: (date: string) => Promise<void>;
+  // Meal plan actions
+  applyMealPlan: (plan: Array<{ date: string; recipe: Recipe }>) => Promise<void>;
   // Toast actions
   addToast: (message: string, type: Toast['type']) => void;
   removeToast: (id: string) => void;
@@ -268,6 +270,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [saveWithRetry]
   );
 
+  const applyMealPlan = useCallback(
+    async (plan: Array<{ date: string; recipe: Recipe }>) => {
+      await saveWithRetry((currentState) => {
+        // Add all new recipes
+        const newRecipes = [...currentState.recipes, ...plan.map((p) => p.recipe)];
+
+        // Update calendar with all assignments
+        let newCalendar = [...currentState.calendar];
+        for (const { date, recipe } of plan) {
+          const existingIndex = newCalendar.findIndex((d) => d.date === date);
+          if (existingIndex >= 0) {
+            newCalendar[existingIndex] = { ...newCalendar[existingIndex], recipeId: recipe.id };
+          } else {
+            newCalendar.push({ date, recipeId: recipe.id });
+          }
+        }
+
+        return { ...currentState, recipes: newRecipes, calendar: newCalendar };
+      });
+    },
+    [saveWithRetry]
+  );
+
   // Fetch state on auth
   useEffect(() => {
     if (isAuthenticated) {
@@ -291,6 +316,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         clearDay,
         swapRecipes,
         toggleGroceriesPurchased,
+        applyMealPlan,
         addToast,
         removeToast,
         refreshState,

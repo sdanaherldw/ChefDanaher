@@ -3,6 +3,8 @@ import type {
   StateResponse,
   GenerateRequest,
   GenerateResponse,
+  GeneratePlanRequest,
+  GeneratePlanResponse,
   AppState,
   User,
 } from '../types';
@@ -88,6 +90,14 @@ export const api = {
   // Recipe generation
   async generateRecipe(request: GenerateRequest): Promise<GenerateResponse> {
     return fetchWithAuth('/generate', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+
+  // Meal plan generation
+  async generateMealPlan(request: GeneratePlanRequest): Promise<GeneratePlanResponse> {
+    return fetchWithAuth('/generate-plan', {
       method: 'POST',
       body: JSON.stringify(request),
     });

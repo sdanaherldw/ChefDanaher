@@ -888,3 +888,211 @@ h4 { font-size: 1.25rem; }
     gap: var(--space-md);
   }
 }
+
+/* Collapsible Card */
+.collapsible-card {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.collapsible-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--transition-fast);
+}
+
+.collapsible-header:hover {
+  background-color: var(--color-cream);
+}
+
+.collapsible-title {
+  font-size: 1rem;
+  color: var(--color-red);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.collapsible-chevron {
+  color: var(--color-gray);
+  transition: transform var(--transition-normal);
+  display: flex;
+  align-items: center;
+}
+
+.collapsible-chevron.open {
+  transform: rotate(180deg);
+}
+
+.collapsible-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-normal);
+}
+
+.collapsible-content.open {
+  max-height: 2000px;
+}
+
+.collapsible-inner {
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+/* Diner Spinner */
+.diner-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.diner-spinner-icon {
+  animation: spin 3s linear infinite;
+  margin-bottom: var(--space-md);
+}
+
+.diner-spinner-fork,
+.diner-spinner-knife {
+  transform-origin: center;
+}
+
+.diner-spinner-message {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--color-red);
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+/* Auto Plan Form */
+.auto-plan-form {
+  max-width: 100%;
+}
+
+.auto-plan-loading {
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Days Selector */
+.days-selector {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.day-option {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  background-color: white;
+  border: 2px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.day-option:hover {
+  border-color: var(--color-red);
+  background-color: var(--color-cream);
+  transform: translateY(-2px);
+}
+
+.day-option.selected {
+  border-color: var(--color-teal);
+  background-color: var(--color-teal);
+  color: white;
+}
+
+/* Meal Plan Preview */
+.meal-plan-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.preview-title {
+  font-size: 1rem;
+  color: var(--color-teal);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.shared-ingredients {
+  background-color: var(--color-cream);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.shared-label {
+  font-weight: 700;
+  color: var(--color-charcoal);
+  margin-right: var(--space-xs);
+}
+
+.shared-list {
+  color: var(--color-gray);
+}
+
+.preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.preview-item {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-sm);
+  background-color: white;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-teal);
+}
+
+.preview-date {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-gray);
+  min-width: 60px;
+}
+
+.preview-recipe {
+  flex: 1;
+}
+
+.preview-recipe-name {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+}
+
+.preview-recipe-meta {
+  font-size: 0.75rem;
+  color: var(--color-gray);
+}
+
+.preview-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
