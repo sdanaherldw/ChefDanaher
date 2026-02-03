@@ -466,13 +466,111 @@ h4 { font-size: 1.25rem; }
   margin-top: var(--space-xs);
 }
 
-/* Grocery List */
+/* Day Card Actions */
+.day-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.purchased-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--color-gray);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.purchased-checkbox input {
+  display: none;
+}
+
+.purchased-checkbox .checkbox-icon {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--color-gray);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: white;
+  background-color: white;
+  transition: all var(--transition-fast);
+}
+
+.purchased-checkbox.checked .checkbox-icon {
+  background-color: var(--color-teal);
+  border-color: var(--color-teal);
+}
+
+.purchased-checkbox:hover {
+  color: var(--color-charcoal);
+}
+
+.purchased-checkbox:hover .checkbox-icon {
+  border-color: var(--color-teal);
+}
+
+/* Grocery List - Below Calendar */
+.grocery-list-section {
+  margin-top: var(--space-xl);
+  background-color: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.grocery-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 2px solid var(--color-gray-light);
+}
+
+.grocery-list-title {
+  font-size: 1.25rem;
+  color: var(--color-red);
+  margin: 0;
+}
+
+.grocery-days-label {
+  font-size: 0.875rem;
+  color: var(--color-gray);
+}
+
+.grocery-empty {
+  text-align: center;
+  color: var(--color-gray);
+  font-style: italic;
+  padding: var(--space-lg);
+}
+
+.grocery-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.grocery-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-lg);
+}
+
 .grocery-section {
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .grocery-section-title {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--color-teal);
   text-transform: uppercase;
   margin-bottom: var(--space-sm);
@@ -483,8 +581,9 @@ h4 { font-size: 1.25rem; }
 .grocery-item {
   display: flex;
   justify-content: space-between;
-  padding: var(--space-sm) 0;
+  padding: var(--space-xs) 0;
   border-bottom: 1px solid var(--color-gray-light);
+  font-size: 0.875rem;
 }
 
 .grocery-item-name {

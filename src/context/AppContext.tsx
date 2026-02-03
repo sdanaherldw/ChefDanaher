@@ -22,6 +22,7 @@ interface AppContextValue {
   assignRecipeToDay: (date: string, recipeId: string) => Promise<void>;
   clearDay: (date: string) => Promise<void>;
   swapRecipes: (date1: string, date2: string) => Promise<void>;
+  toggleGroceriesPurchased: (date: string) => Promise<void>;
   // Toast actions
   addToast: (message: string, type: Toast['type']) => void;
   removeToast: (id: string) => void;
@@ -242,6 +243,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [saveWithRetry]
   );
 
+  const toggleGroceriesPurchased = useCallback(
+    async (date: string) => {
+      await saveWithRetry((currentState) => {
+        const existingDayIndex = currentState.calendar.findIndex((d) => d.date === date);
+
+        if (existingDayIndex >= 0) {
+          const day = currentState.calendar[existingDayIndex];
+          const newCalendar = [...currentState.calendar];
+          newCalendar[existingDayIndex] = {
+            ...day,
+            groceriesPurchased: !day.groceriesPurchased,
+          };
+          return { ...currentState, calendar: newCalendar };
+        } else {
+          // Create day entry with groceriesPurchased = true
+          return {
+            ...currentState,
+            calendar: [...currentState.calendar, { date, recipeId: null, groceriesPurchased: true }],
+          };
+        }
+      });
+    },
+    [saveWithRetry]
+  );
+
   // Fetch state on auth
   useEffect(() => {
     if (isAuthenticated) {
@@ -264,6 +290,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         assignRecipeToDay,
         clearDay,
         swapRecipes,
+        toggleGroceriesPurchased,
         addToast,
         removeToast,
         refreshState,

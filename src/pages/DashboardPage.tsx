@@ -124,14 +124,15 @@ export function DashboardPage() {
           <aside className="sidebar">
             <GenerateForm />
             <RecipeList onRecipeClick={handleRecipeClick} />
-            <GroceryList />
           </aside>
 
-          <section>
+          <section className="main-section">
             <h2 style={{ marginBottom: 'var(--space-lg)' }}>
               This Week's Meals
             </h2>
             <CalendarGrid onRecipeClick={handleRecipeClick} />
+
+            <GroceryList />
           </section>
         </div>
 

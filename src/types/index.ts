@@ -104,6 +104,7 @@ export interface Recipe {
 export interface DayPlan {
   date: string; // ISO date string YYYY-MM-DD
   recipeId: string | null;
+  groceriesPurchased?: boolean; // Mark if groceries for this day are already bought
 }
 
 // Application State

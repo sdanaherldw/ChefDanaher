@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { format, addDays, startOfToday } from 'date-fns';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../UI/Button';
@@ -26,34 +26,33 @@ const SECTION_LABELS: Record<StoreSection, string> = {
 
 export function GroceryList() {
   const { state } = useAppState();
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
   const days = useMemo(() => {
     const today = startOfToday();
-    return Array.from({ length: 5 }, (_, i) => ({
-      date: addDays(today, i),
-      dateStr: format(addDays(today, i), 'yyyy-MM-dd'),
-      label: format(addDays(today, i), 'EEE d'),
-    }));
-  }, []);
+    return Array.from({ length: 5 }, (_, i) => {
+      const date = addDays(today, i);
+      const dateStr = format(date, 'yyyy-MM-dd');
+      const dayPlan = state.calendar.find((d) => d.date === dateStr);
+      return {
+        date,
+        dateStr,
+        label: format(date, 'EEE d'),
+        purchased: dayPlan?.groceriesPurchased || false,
+        hasRecipe: !!dayPlan?.recipeId,
+      };
+    });
+  }, [state.calendar]);
 
-  const toggleDay = (dateStr: string) => {
-    setSelectedDays((prev) =>
-      prev.includes(dateStr)
-        ? prev.filter((d) => d !== dateStr)
-        : [...prev, dateStr]
-    );
-  };
-
-  const selectAll = () => {
-    setSelectedDays(days.map((d) => d.dateStr));
-  };
+  // Count how many days are not yet purchased (need groceries)
+  const unpurchasedDays = days.filter((d) => d.hasRecipe && !d.purchased);
 
   const groceryItems = useMemo(() => {
-    const daysToInclude =
-      selectedDays.length > 0 ? selectedDays : days.map((d) => d.dateStr);
+    // Only include days that have a recipe AND are not marked as purchased
+    const daysToInclude = days
+      .filter((d) => d.hasRecipe && !d.purchased)
+      .map((d) => d.dateStr);
 
-    // Get recipes for selected days
+    // Get recipes for those days
     const recipes = daysToInclude
       .map((dateStr) => {
         const dayPlan = state.calendar.find((d) => d.date === dateStr);
@@ -88,7 +87,7 @@ export function GroceryList() {
     });
 
     return Array.from(itemMap.values());
-  }, [state.calendar, state.recipes, selectedDays, days]);
+  }, [state.calendar, state.recipes, days]);
 
   const groupedItems = useMemo(() => {
     const groups: Record<StoreSection, GroceryItem[]> = {
@@ -112,62 +111,58 @@ export function GroceryList() {
     window.print();
   };
 
-  return (
-    <div className="sidebar-section">
-      <h3 className="sidebar-title">Grocery List</h3>
+  // Show which days need groceries
+  const needGroceriesLabel = unpurchasedDays.length > 0
+    ? `For: ${unpurchasedDays.map((d) => d.label).join(', ')}`
+    : '';
 
-      <div style={{ marginBottom: 'var(--space-md)' }}>
-        <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginBottom: 'var(--space-sm)' }}>
-          {days.map((day) => (
-            <span
-              key={day.dateStr}
-              className={`tag ${selectedDays.includes(day.dateStr) ? 'vegan' : ''}`}
-              onClick={() => toggleDay(day.dateStr)}
-              style={{ cursor: 'pointer' }}
-            >
-              {day.label}
-            </span>
-          ))}
-        </div>
-        <Button size="small" variant="secondary" onClick={selectAll}>
-          Select All
-        </Button>
+  return (
+    <div className="grocery-list-section">
+      <div className="grocery-list-header">
+        <h3 className="grocery-list-title">Grocery List</h3>
+        {needGroceriesLabel && (
+          <span className="grocery-days-label">{needGroceriesLabel}</span>
+        )}
       </div>
 
       {groceryItems.length === 0 ? (
-        <p style={{ textAlign: 'center', color: 'var(--color-gray)' }}>
-          No meals planned for selected days.
+        <p className="grocery-empty">
+          {days.some((d) => d.hasRecipe)
+            ? 'All groceries purchased! Check a day to add its items back.'
+            : 'No meals planned yet.'}
         </p>
       ) : (
-        <>
-          {SECTION_ORDER.map((section) => {
-            const items = groupedItems[section];
-            if (items.length === 0) return null;
+        <div className="grocery-content">
+          <div className="grocery-sections">
+            {SECTION_ORDER.map((section) => {
+              const items = groupedItems[section];
+              if (items.length === 0) return null;
 
-            return (
-              <div key={section} className="grocery-section">
-                <h4 className="grocery-section-title">
-                  {SECTION_LABELS[section]}
-                </h4>
-                {items.map((item, i) => (
-                  <div key={i} className="grocery-item">
-                    <span className="grocery-item-name">{item.name}</span>
-                    <span className="grocery-item-amount">
-                      {item.totalAmount} {item.unit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+              return (
+                <div key={section} className="grocery-section">
+                  <h4 className="grocery-section-title">
+                    {SECTION_LABELS[section]}
+                  </h4>
+                  {items.map((item, i) => (
+                    <div key={i} className="grocery-item">
+                      <span className="grocery-item-name">{item.name}</span>
+                      <span className="grocery-item-amount">
+                        {item.totalAmount} {item.unit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
 
           <Button
             onClick={handlePrint}
-            style={{ width: '100%', marginTop: 'var(--space-md)' }}
+            style={{ marginTop: 'var(--space-md)' }}
           >
             Print List
           </Button>
-        </>
+        </div>
       )}
     </div>
   );

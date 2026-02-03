@@ -16,23 +16,34 @@ export function CalendarGrid({ onRecipeClick }: CalendarGridProps) {
     return Array.from({ length: 5 }, (_, i) => addDays(today, i));
   }, []);
 
-  const getRecipeForDay = (date: Date): Recipe | null => {
+  const getDayData = (date: Date): { recipe: Recipe | null; groceriesPurchased: boolean } => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const dayPlan = state.calendar.find((d) => d.date === dateStr);
-    if (!dayPlan?.recipeId) return null;
-    return state.recipes.find((r) => r.id === dayPlan.recipeId) || null;
+
+    const recipe = dayPlan?.recipeId
+      ? state.recipes.find((r) => r.id === dayPlan.recipeId) || null
+      : null;
+
+    return {
+      recipe,
+      groceriesPurchased: dayPlan?.groceriesPurchased || false,
+    };
   };
 
   return (
     <div className="calendar-grid">
-      {days.map((date) => (
-        <DayCard
-          key={date.toISOString()}
-          date={date}
-          recipe={getRecipeForDay(date)}
-          onRecipeClick={onRecipeClick}
-        />
-      ))}
+      {days.map((date) => {
+        const { recipe, groceriesPurchased } = getDayData(date);
+        return (
+          <DayCard
+            key={date.toISOString()}
+            date={date}
+            recipe={recipe}
+            groceriesPurchased={groceriesPurchased}
+            onRecipeClick={onRecipeClick}
+          />
+        );
+      })}
     </div>
   );
 }

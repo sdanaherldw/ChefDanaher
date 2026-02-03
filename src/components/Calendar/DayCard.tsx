@@ -8,11 +8,12 @@ import type { Recipe } from '../../types';
 interface DayCardProps {
   date: Date;
   recipe: Recipe | null;
+  groceriesPurchased: boolean;
   onRecipeClick?: (recipe: Recipe) => void;
 }
 
-export function DayCard({ date, recipe, onRecipeClick }: DayCardProps) {
-  const { clearDay } = useAppState();
+export function DayCard({ date, recipe, groceriesPurchased, onRecipeClick }: DayCardProps) {
+  const { clearDay, toggleGroceriesPurchased } = useAppState();
   const dateStr = format(date, 'yyyy-MM-dd');
   const dayName = isToday(date) ? 'Today' : format(date, 'EEEE');
   const dateDisplay = format(date, 'MMM d');
@@ -30,14 +31,24 @@ export function DayCard({ date, recipe, onRecipeClick }: DayCardProps) {
               dayId={dateStr}
               onClick={() => onRecipeClick?.(recipe)}
             />
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => clearDay(dateStr)}
-              style={{ marginTop: 'var(--space-sm)', width: '100%' }}
-            >
-              Clear
-            </Button>
+            <div className="day-actions">
+              <label className={`purchased-checkbox ${groceriesPurchased ? 'checked' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={groceriesPurchased}
+                  onChange={() => toggleGroceriesPurchased(dateStr)}
+                />
+                <span className="checkbox-icon">{groceriesPurchased ? '✓' : ''}</span>
+                <span className="checkbox-label">Purchased</span>
+              </label>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => clearDay(dateStr)}
+              >
+                Clear
+              </Button>
+            </div>
           </div>
         ) : (
           <p className="day-empty">Drag a recipe here</p>
