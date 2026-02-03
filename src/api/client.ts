@@ -5,6 +5,7 @@ import type {
   GenerateResponse,
   GeneratePlanRequest,
   GeneratePlanResponse,
+  GenerateBatchResponse,
   AppState,
   User,
 } from '../types';
@@ -100,6 +101,14 @@ export const api = {
     return fetchWithAuth('/generate-plan', {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  },
+
+  // Batch recipe suggestions
+  async generateBatchSuggestions(diners: string[]): Promise<GenerateBatchResponse> {
+    return fetchWithAuth('/generate-batch', {
+      method: 'POST',
+      body: JSON.stringify({ diners }),
     });
   },
 };

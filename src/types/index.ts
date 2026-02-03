@@ -98,6 +98,8 @@ export interface Recipe {
   createdAt: string;
   // New: who this recipe works for
   suitableFor?: string[]; // member IDs
+  // Usage tracking: set when groceries are purchased for a day with this recipe
+  lastUsedAt?: string; // ISO date string
 }
 
 // Calendar Types
@@ -107,10 +109,17 @@ export interface DayPlan {
   groceriesPurchased?: boolean; // Mark if groceries for this day are already bought
 }
 
+// Application Settings
+export interface AppSettings {
+  recipeDecayDays: number;         // Days until used recipes are considered stale (default 60)
+  suggestedRecipeDecayDays: number; // Days until never-used recipes are considered stale (default 30)
+}
+
 // Application State
 export interface AppState {
   recipes: Recipe[];
   calendar: DayPlan[];
+  settings: AppSettings;
   version: number;
 }
 
@@ -143,6 +152,14 @@ export interface GenerateRequest {
   mainIngredient?: string;
   specialNotes?: string;
   maxTime?: number;
+}
+
+export interface GenerateBatchRequest {
+  diners: string[]; // member IDs
+}
+
+export interface GenerateBatchResponse {
+  recipes: Recipe[];
 }
 
 export interface GenerateResponse {

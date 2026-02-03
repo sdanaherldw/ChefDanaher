@@ -1096,3 +1096,409 @@ h4 { font-size: 1.25rem; }
   gap: var(--space-sm);
   margin-top: var(--space-sm);
 }
+
+/* Settings Page */
+.settings-page {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.settings-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.settings-description {
+  color: var(--color-gray);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form-help {
+  font-size: 0.8125rem;
+  color: var(--color-gray);
+  margin-top: var(--space-xs);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-gray-light);
+}
+
+/* Decay Dialog */
+.decay-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.decay-dialog {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 400px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.decay-title {
+  background-color: var(--color-red);
+  color: white;
+  padding: var(--space-md) var(--space-lg);
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.decay-content {
+  padding: var(--space-xl) var(--space-lg);
+  text-align: center;
+}
+
+.decay-content p {
+  margin: 0 0 var(--space-lg);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.decay-content strong {
+  color: var(--color-red);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+}
+
+.decay-question {
+  color: var(--color-gray);
+  font-size: 0.9375rem !important;
+}
+
+.decay-actions {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background-color: var(--color-cream);
+  border-top: 1px solid var(--color-gray-light);
+}
+
+.decay-actions .btn {
+  flex: 1;
+}
+
+/* Nutrition Label Card */
+.nutrition-label {
+  background-color: white;
+  border: 3px solid var(--color-charcoal);
+  border-radius: var(--radius-sm);
+  max-width: 360px;
+  margin: 0 auto;
+  font-family: var(--font-body);
+}
+
+.nutrition-label-header {
+  background-color: var(--color-charcoal);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.nutrition-label-title {
+  padding: var(--space-md);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--color-charcoal);
+}
+
+.nutrition-label-thick-border {
+  height: 8px;
+  background-color: var(--color-charcoal);
+  margin: 0 var(--space-md);
+}
+
+.nutrition-label-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.nutrition-label-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nutrition-label-meta-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-gray);
+}
+
+.nutrition-label-meta-value {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+}
+
+.nutrition-label-meta-divider {
+  margin: 0 var(--space-lg);
+  color: var(--color-gray-light);
+}
+
+.nutrition-label-section {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.nutrition-label-section-title {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-charcoal);
+  padding-bottom: var(--space-xs);
+}
+
+.nutrition-label-ingredients {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nutrition-label-ingredient {
+  display: flex;
+  align-items: baseline;
+  padding: 2px 0;
+  font-size: 0.875rem;
+}
+
+.nutrition-label-ingredient-name {
+  color: var(--color-charcoal);
+}
+
+.nutrition-label-ingredient-dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--color-gray-light);
+  margin: 0 var(--space-xs);
+  min-width: 20px;
+}
+
+.nutrition-label-ingredient-amount {
+  color: var(--color-gray);
+  white-space: nowrap;
+}
+
+.nutrition-label-description {
+  padding: var(--space-md);
+  font-style: italic;
+  color: var(--color-gray);
+  text-align: center;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--color-gray-light);
+}
+
+.nutrition-label-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  justify-content: center;
+}
+
+.nutrition-label-tag {
+  font-size: 0.6875rem;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-cream);
+  color: var(--color-charcoal);
+  text-transform: lowercase;
+}
+
+/* Batch Suggestion Dialog */
+.batch-dialog {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-cream);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.batch-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  background-color: white;
+  border-bottom: 2px solid var(--color-gray-light);
+  gap: var(--space-md);
+}
+
+.batch-progress {
+  flex: 1;
+  max-width: 300px;
+}
+
+.batch-progress-text {
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  display: block;
+  margin-bottom: var(--space-xs);
+  text-align: center;
+}
+
+.batch-progress-bar {
+  height: 6px;
+  background-color: var(--color-gray-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.batch-progress-fill {
+  height: 100%;
+  background-color: var(--color-teal);
+  transition: width var(--transition-normal);
+}
+
+.batch-kept-count {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  color: var(--color-teal);
+}
+
+.batch-dialog-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xl);
+}
+
+.batch-actions {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.batch-actions .btn {
+  min-width: 120px;
+}
+
+/* Batch Summary */
+.batch-summary {
+  text-align: center;
+  max-width: 400px;
+}
+
+.batch-summary-title {
+  font-size: 2rem;
+  color: var(--color-red);
+  margin-bottom: var(--space-md);
+}
+
+.batch-summary-count {
+  font-size: 1.25rem;
+  margin-bottom: var(--space-xl);
+}
+
+.batch-summary-count strong {
+  color: var(--color-teal);
+}
+
+.batch-summary-list {
+  background-color: white;
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-xl);
+  text-align: left;
+}
+
+.batch-summary-list h4 {
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  margin-bottom: var(--space-md);
+}
+
+.batch-summary-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.batch-summary-list li {
+  padding: var(--space-xs) 0;
+  border-bottom: 1px solid var(--color-gray-light);
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  font-size: 0.9375rem;
+}
+
+.batch-summary-list li:last-child {
+  border-bottom: none;
+}
+
+.batch-summary-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Batch Form */
+.batch-form {
+  max-width: 100%;
+}
+
+.batch-form-intro {
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  margin-bottom: var(--space-md);
+  line-height: 1.5;
+}
+
+.batch-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xl);
+}
+
+.batch-loading-text {
+  font-size: 0.875rem;
+  color: var(--color-gray);
+  text-align: center;
+  margin-top: var(--space-md);
+}

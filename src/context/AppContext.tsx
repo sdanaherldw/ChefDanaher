@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { api, ApiError } from '../api/client';
 import { useAuth } from './AuthContext';
-import type { AppState, Recipe, DayPlan, Toast } from '../types';
+import type { AppState, Recipe, DayPlan, Toast, AppSettings } from '../types';
 
 interface AppContextValue {
   state: AppState;
@@ -17,7 +17,9 @@ interface AppContextValue {
   toasts: Toast[];
   // Recipe actions
   addRecipe: (recipe: Recipe) => Promise<void>;
+  addRecipes: (recipes: Recipe[]) => Promise<void>;
   removeRecipe: (recipeId: string) => Promise<void>;
+  updateRecipeLastUsed: (recipeId: string, date: string) => Promise<void>;
   // Calendar actions
   assignRecipeToDay: (date: string, recipeId: string) => Promise<void>;
   clearDay: (date: string) => Promise<void>;
@@ -25,6 +27,8 @@ interface AppContextValue {
   toggleGroceriesPurchased: (date: string) => Promise<void>;
   // Meal plan actions
   applyMealPlan: (plan: Array<{ date: string; recipe: Recipe }>) => Promise<void>;
+  // Settings actions
+  updateSettings: (settings: AppSettings) => Promise<void>;
   // Toast actions
   addToast: (message: string, type: Toast['type']) => void;
   removeToast: (id: string) => void;
@@ -35,6 +39,10 @@ interface AppContextValue {
 const defaultState: AppState = {
   recipes: [],
   calendar: [],
+  settings: {
+    recipeDecayDays: 60,
+    suggestedRecipeDecayDays: 30,
+  },
   version: 0,
 };
 
@@ -167,6 +175,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [saveWithRetry]
   );
 
+  const addRecipes = useCallback(
+    async (recipes: Recipe[]) => {
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        recipes: [...currentState.recipes, ...recipes],
+      }));
+    },
+    [saveWithRetry]
+  );
+
+  const updateRecipeLastUsed = useCallback(
+    async (recipeId: string, date: string) => {
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        recipes: currentState.recipes.map((r) =>
+          r.id === recipeId ? { ...r, lastUsedAt: date } : r
+        ),
+      }));
+    },
+    [saveWithRetry]
+  );
+
   const removeRecipe = useCallback(
     async (recipeId: string) => {
       await saveWithRetry((currentState) => ({
@@ -253,11 +283,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (existingDayIndex >= 0) {
           const day = currentState.calendar[existingDayIndex];
           const newCalendar = [...currentState.calendar];
+          const wasNotPurchased = !day.groceriesPurchased;
           newCalendar[existingDayIndex] = {
             ...day,
-            groceriesPurchased: !day.groceriesPurchased,
+            groceriesPurchased: wasNotPurchased,
           };
-          return { ...currentState, calendar: newCalendar };
+
+          // If toggling to purchased and there's a recipe, update lastUsedAt
+          let newRecipes = currentState.recipes;
+          if (wasNotPurchased && day.recipeId) {
+            newRecipes = currentState.recipes.map((r) =>
+              r.id === day.recipeId ? { ...r, lastUsedAt: date } : r
+            );
+          }
+
+          return { ...currentState, calendar: newCalendar, recipes: newRecipes };
         } else {
           // Create day entry with groceriesPurchased = true
           return {
@@ -293,6 +333,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [saveWithRetry]
   );
 
+  const updateSettings = useCallback(
+    async (settings: AppSettings) => {
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        settings,
+      }));
+    },
+    [saveWithRetry]
+  );
+
   // Fetch state on auth
   useEffect(() => {
     if (isAuthenticated) {
@@ -311,12 +361,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isLoading,
         toasts,
         addRecipe,
+        addRecipes,
         removeRecipe,
+        updateRecipeLastUsed,
         assignRecipeToDay,
         clearDay,
         swapRecipes,
         toggleGroceriesPurchased,
         applyMealPlan,
+        updateSettings,
         addToast,
         removeToast,
         refreshState,

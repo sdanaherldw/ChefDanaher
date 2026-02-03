@@ -5,12 +5,14 @@ import { ToastContainer } from '../UI/Toast';
 interface LayoutProps {
   children: ReactNode;
   showHeader?: boolean;
+  onSettingsClick?: () => void;
+  showSettingsButton?: boolean;
 }
 
-export function Layout({ children, showHeader = true }: LayoutProps) {
+export function Layout({ children, showHeader = true, onSettingsClick, showSettingsButton = true }: LayoutProps) {
   return (
     <div className="app">
-      {showHeader && <Header />}
+      {showHeader && <Header onSettingsClick={onSettingsClick} showSettings={showSettingsButton} />}
       <main className="main-content">{children}</main>
       <ToastContainer />
     </div>

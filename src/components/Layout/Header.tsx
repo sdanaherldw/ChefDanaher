@@ -1,7 +1,12 @@
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../UI/Button';
 
-export function Header() {
+interface HeaderProps {
+  onSettingsClick?: () => void;
+  showSettings?: boolean;
+}
+
+export function Header({ onSettingsClick, showSettings = true }: HeaderProps) {
   const { user, logout } = useAuth();
 
   return (
@@ -14,6 +19,11 @@ export function Header() {
               <span style={{ color: 'var(--color-cream)' }}>
                 Welcome, {user.username}
               </span>
+              {showSettings && onSettingsClick && (
+                <Button variant="ghost" onClick={onSettingsClick}>
+                  Settings
+                </Button>
+              )}
               <Button variant="ghost" onClick={logout}>
                 Logout
               </Button>

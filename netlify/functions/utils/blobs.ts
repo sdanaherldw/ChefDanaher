@@ -1,8 +1,14 @@
 import { getStore } from '@netlify/blobs';
 
+export interface AppSettings {
+  recipeDecayDays: number;
+  suggestedRecipeDecayDays: number;
+}
+
 export interface AppState {
   recipes: unknown[];
   calendar: unknown[];
+  settings: AppSettings;
   version: number;
 }
 
@@ -29,6 +35,10 @@ export async function getState(): Promise<AppState> {
   return {
     recipes: [],
     calendar: [],
+    settings: {
+      recipeDecayDays: 60,
+      suggestedRecipeDecayDays: 30,
+    },
     version: 0,
   };
 }
