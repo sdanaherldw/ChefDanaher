@@ -15,6 +15,7 @@ export function GenerateForm() {
     mealType: 'dinner' as GenerateRequest['mealType'],
     cuisine: '',
     mainIngredient: '',
+    specialNotes: '',
     maxTime: 40,
   });
 
@@ -62,6 +63,7 @@ export function GenerateForm() {
         diners: selectedDiners,
         cuisine: formData.cuisine || undefined,
         mainIngredient: formData.mainIngredient || undefined,
+        specialNotes: formData.specialNotes || undefined,
         maxTime: formData.maxTime,
       });
       await addRecipe(recipe);
@@ -72,6 +74,7 @@ export function GenerateForm() {
         ...prev,
         cuisine: '',
         mainIngredient: '',
+        specialNotes: '',
       }));
     } catch (error) {
       addToast('Failed to generate recipe', 'error');
@@ -196,6 +199,25 @@ export function GenerateForm() {
               }))
             }
             placeholder="e.g., tofu, chickpeas, tempeh"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="specialNotes" className="form-label">
+            Special Notes (optional)
+          </label>
+          <textarea
+            id="specialNotes"
+            className="form-input form-textarea"
+            value={formData.specialNotes}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                specialNotes: e.target.value,
+              }))
+            }
+            placeholder="e.g., Birthday dinner, extra protein, kid-friendly, comfort food..."
+            rows={2}
           />
         </div>
 

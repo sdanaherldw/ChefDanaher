@@ -79,6 +79,7 @@ interface GenerateRequest {
   diners: string[];
   cuisine?: string;
   mainIngredient?: string;
+  specialNotes?: string;
   maxTime?: number;
 }
 
@@ -163,6 +164,7 @@ REQUEST DETAILS:
 - Meal type: ${request.mealType}
 ${request.cuisine ? `- Cuisine style: ${request.cuisine}` : ''}
 ${request.mainIngredient ? `- Feature this ingredient: ${request.mainIngredient}` : ''}
+${request.specialNotes ? `- Special notes: ${request.specialNotes}` : ''}
 - Servings: ${servings} (cooking for: ${request.diners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean).join(', ')})
 
 RESPONSE FORMAT:

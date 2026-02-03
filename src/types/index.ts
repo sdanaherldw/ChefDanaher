@@ -141,6 +141,7 @@ export interface GenerateRequest {
   diners: string[]; // member IDs
   cuisine?: string;
   mainIngredient?: string;
+  specialNotes?: string;
   maxTime?: number;
 }
 
