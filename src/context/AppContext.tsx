@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { api, ApiError } from '../api/client';
@@ -42,6 +43,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Use a ref to track if a save is in progress to prevent race conditions
+  const saveInProgressRef = useRef(false);
+  const pendingOperationsRef = useRef<Array<(currentState: AppState) => AppState>>([]);
+
   const addToast = useCallback((message: string, type: Toast['type']) => {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -68,29 +73,82 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, addToast]);
 
-  const saveStateOptimistic = useCallback(
-    async (newState: AppState) => {
-      const previousState = state;
-      const currentVersion = state.version;
+  // Core save function that handles conflicts with retry
+  const saveWithRetry = useCallback(
+    async (
+      operation: (currentState: AppState) => AppState,
+      maxRetries: number = 3
+    ): Promise<boolean> => {
+      // If a save is already in progress, queue this operation
+      if (saveInProgressRef.current) {
+        pendingOperationsRef.current.push(operation);
+        return true; // Will be processed when current save completes
+      }
 
-      // Optimistic update
-      setState(newState);
+      saveInProgressRef.current = true;
+      let retries = 0;
+      let currentState = state;
 
       try {
-        const { state: serverState } = await api.saveState(newState, currentVersion);
-        setState(serverState);
-      } catch (error) {
-        // Rollback on error
-        setState(previousState);
+        while (retries < maxRetries) {
+          // Apply the operation to get new state
+          const newState = operation(currentState);
 
-        if (error instanceof ApiError && error.status === 409) {
-          // Version conflict
-          const conflictData = error.data as { state: AppState };
-          setState(conflictData.state);
-          addToast('State was updated elsewhere. Refreshed with latest data.', 'warning');
-        } else {
-          addToast('Failed to save changes', 'error');
+          // Optimistic update
+          setState(newState);
+
+          try {
+            const { state: serverState } = await api.saveState(newState, currentState.version);
+            setState(serverState);
+            currentState = serverState;
+
+            // Process any pending operations
+            while (pendingOperationsRef.current.length > 0) {
+              const pendingOp = pendingOperationsRef.current.shift()!;
+              const pendingNewState = pendingOp(currentState);
+              setState(pendingNewState);
+
+              try {
+                const { state: pendingServerState } = await api.saveState(pendingNewState, currentState.version);
+                setState(pendingServerState);
+                currentState = pendingServerState;
+              } catch (pendingError) {
+                if (pendingError instanceof ApiError && pendingError.status === 409) {
+                  // Conflict on pending op - refresh and requeue
+                  const conflictData = pendingError.data as { state: AppState };
+                  currentState = conflictData.state;
+                  setState(currentState);
+                  pendingOperationsRef.current.unshift(pendingOp);
+                } else {
+                  throw pendingError;
+                }
+              }
+            }
+
+            return true;
+          } catch (error) {
+            if (error instanceof ApiError && error.status === 409) {
+              // Version conflict - get latest state and retry
+              const conflictData = error.data as { state: AppState };
+              currentState = conflictData.state;
+              setState(currentState);
+              retries++;
+
+              if (retries < maxRetries) {
+                // Small delay before retry
+                await new Promise(resolve => setTimeout(resolve, 100));
+              }
+            } else {
+              throw error;
+            }
+          }
         }
+
+        // Max retries exceeded
+        addToast('Failed to save after multiple attempts. Please refresh.', 'error');
+        return false;
+      } finally {
+        saveInProgressRef.current = false;
       }
     },
     [state, addToast]
@@ -98,86 +156,90 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addRecipe = useCallback(
     async (recipe: Recipe) => {
-      const newState = {
-        ...state,
-        recipes: [...state.recipes, recipe],
-      };
-      await saveStateOptimistic(newState);
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        recipes: [...currentState.recipes, recipe],
+      }));
     },
-    [state, saveStateOptimistic]
+    [saveWithRetry]
   );
 
   const removeRecipe = useCallback(
     async (recipeId: string) => {
-      const newState = {
-        ...state,
-        recipes: state.recipes.filter((r) => r.id !== recipeId),
-        calendar: state.calendar.map((day) =>
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        recipes: currentState.recipes.filter((r) => r.id !== recipeId),
+        calendar: currentState.calendar.map((day) =>
           day.recipeId === recipeId ? { ...day, recipeId: null } : day
         ),
-      };
-      await saveStateOptimistic(newState);
+      }));
     },
-    [state, saveStateOptimistic]
+    [saveWithRetry]
   );
 
   const assignRecipeToDay = useCallback(
     async (date: string, recipeId: string) => {
-      const existingDayIndex = state.calendar.findIndex((d) => d.date === date);
-      let newCalendar: DayPlan[];
+      await saveWithRetry((currentState) => {
+        const existingDayIndex = currentState.calendar.findIndex((d) => d.date === date);
+        let newCalendar: DayPlan[];
 
-      if (existingDayIndex >= 0) {
-        newCalendar = state.calendar.map((day, i) =>
-          i === existingDayIndex ? { ...day, recipeId } : day
-        );
-      } else {
-        newCalendar = [...state.calendar, { date, recipeId }];
-      }
+        if (existingDayIndex >= 0) {
+          newCalendar = currentState.calendar.map((day, i) =>
+            i === existingDayIndex ? { ...day, recipeId } : day
+          );
+        } else {
+          newCalendar = [...currentState.calendar, { date, recipeId }];
+        }
 
-      await saveStateOptimistic({ ...state, calendar: newCalendar });
+        return { ...currentState, calendar: newCalendar };
+      });
     },
-    [state, saveStateOptimistic]
+    [saveWithRetry]
   );
 
   const clearDay = useCallback(
     async (date: string) => {
-      const newCalendar = state.calendar.map((day) =>
-        day.date === date ? { ...day, recipeId: null } : day
-      );
-      await saveStateOptimistic({ ...state, calendar: newCalendar });
+      await saveWithRetry((currentState) => ({
+        ...currentState,
+        calendar: currentState.calendar.map((day) =>
+          day.date === date ? { ...day, recipeId: null } : day
+        ),
+      }));
     },
-    [state, saveStateOptimistic]
+    [saveWithRetry]
   );
 
   const swapRecipes = useCallback(
     async (date1: string, date2: string) => {
-      const day1 = state.calendar.find((d) => d.date === date1);
-      const day2 = state.calendar.find((d) => d.date === date2);
+      await saveWithRetry((currentState) => {
+        const day1 = currentState.calendar.find((d) => d.date === date1);
+        const day2 = currentState.calendar.find((d) => d.date === date2);
 
-      const recipe1 = day1?.recipeId || null;
-      const recipe2 = day2?.recipeId || null;
+        const recipe1 = day1?.recipeId || null;
+        const recipe2 = day2?.recipeId || null;
 
-      let newCalendar = [...state.calendar];
+        let newCalendar = [...currentState.calendar];
 
-      // Update or add day1
-      const day1Index = newCalendar.findIndex((d) => d.date === date1);
-      if (day1Index >= 0) {
-        newCalendar[day1Index] = { date: date1, recipeId: recipe2 };
-      } else {
-        newCalendar.push({ date: date1, recipeId: recipe2 });
-      }
+        // Update or add day1
+        const day1Index = newCalendar.findIndex((d) => d.date === date1);
+        if (day1Index >= 0) {
+          newCalendar[day1Index] = { date: date1, recipeId: recipe2 };
+        } else {
+          newCalendar.push({ date: date1, recipeId: recipe2 });
+        }
 
-      // Update or add day2
-      const day2Index = newCalendar.findIndex((d) => d.date === date2);
-      if (day2Index >= 0) {
-        newCalendar[day2Index] = { date: date2, recipeId: recipe1 };
-      } else {
-        newCalendar.push({ date: date2, recipeId: recipe1 });
-      }
+        // Update or add day2
+        const day2Index = newCalendar.findIndex((d) => d.date === date2);
+        if (day2Index >= 0) {
+          newCalendar[day2Index] = { date: date2, recipeId: recipe1 };
+        } else {
+          newCalendar.push({ date: date2, recipeId: recipe1 });
+        }
 
-      await saveStateOptimistic({ ...state, calendar: newCalendar });
+        return { ...currentState, calendar: newCalendar };
+      });
     },
-    [state, saveStateOptimistic]
+    [saveWithRetry]
   );
 
   // Fetch state on auth
