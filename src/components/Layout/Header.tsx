@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../UI/Button';
-import { useRepeatedClicks } from '../../hooks/useKeyboardShortcuts';
 
 interface HeaderProps {
   onSettingsClick?: () => void;
@@ -56,8 +55,8 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
         <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
           <strong>Ripsaw</strong> is... unpredictable. You never quite know what's
           coming out of that kitchen. Could be genius. Could be chaos. Either way,
-          you're eating it. "Just try it," he'll say, sliding a plate your way.
-          "It's all you got."
+          you're eating it. "Just try it," comes the voice from the pass, sliding
+          a plate your way. "It's all you got."
         </p>
         <p style={{ color: 'var(--color-gray)', fontSize: '0.875rem', marginBottom: 'var(--space-lg)' }}>
           Together, they make sure your family eats well every night.
@@ -72,13 +71,7 @@ export function Header({ onSettingsClick, onFullMenuClick, onLogoClick, showSett
   const { user, logout } = useAuth();
   const [showAbout, setShowAbout] = useState(false);
 
-  // Easter egg: click logo 5 times to see the About panel
-  const triggerEasterEgg = useRepeatedClicks(5, () => {
-    setShowAbout(true);
-  });
-
   const handleLogoClick = () => {
-    triggerEasterEgg(); // Track for easter egg
     if (onLogoClick) {
       onLogoClick(); // Navigate home
     }
@@ -117,6 +110,12 @@ export function Header({ onSettingsClick, onFullMenuClick, onLogoClick, showSett
                     Back of House
                   </Button>
                 )}
+                <button
+                  className="story-link"
+                  onClick={() => setShowAbout(true)}
+                >
+                  The Story
+                </button>
                 <Button variant="ghost" onClick={logout}>
                   Clock Out
                 </Button>

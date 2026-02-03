@@ -157,6 +157,22 @@ h4 { font-size: 1.25rem; }
   align-items: center;
 }
 
+/* Subtle story link */
+.story-link {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-sm);
+  transition: color 150ms var(--ease-smooth);
+}
+
+.story-link:hover {
+  color: var(--color-cream);
+}
+
 /* Buttons */
 .btn {
   font-family: var(--font-heading);
@@ -564,7 +580,238 @@ h4 { font-size: 1.25rem; }
   font-style: italic;
 }
 
-/* Recipe Detail */
+/* Recipe Detail - New Format */
+.recipe-detail-new {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-xl);
+}
+
+.recipe-header {
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 3px solid var(--color-charcoal);
+}
+
+.recipe-title {
+  font-size: 1.75rem;
+  color: var(--color-charcoal);
+  margin-bottom: var(--space-xs);
+}
+
+.recipe-subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-gray);
+}
+
+.recipe-two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+@media (max-width: 768px) {
+  .recipe-two-column {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recipe-section-header {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-md);
+  color: var(--color-charcoal);
+}
+
+/* Ingredient Groups */
+.ingredients-group {
+  margin-bottom: var(--space-md);
+}
+
+.ingredients-group-title {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  color: var(--color-gray);
+  border-bottom: 1px solid var(--color-gray-light);
+  padding-bottom: var(--space-xs);
+  margin-bottom: var(--space-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.dietary-badge {
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-teal);
+  color: white;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.ingredients-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ingredients-checklist li {
+  padding: 3px 0;
+  padding-left: 20px;
+  position: relative;
+  font-size: 0.9375rem;
+}
+
+.ingredients-checklist li::before {
+  content: "□";
+  position: absolute;
+  left: 0;
+  color: var(--color-gray);
+}
+
+/* Setup Box */
+.setup-box {
+  background-color: var(--color-cream);
+  border: 1px solid var(--color-gray-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.setup-box-title {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+  color: var(--color-charcoal);
+}
+
+.setup-box p {
+  font-size: 0.9375rem;
+  color: var(--color-gray);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Recipe Tags Section */
+.recipe-tags-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+}
+
+.recipe-tag {
+  font-size: 0.75rem;
+  padding: 3px var(--space-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-cream-dark);
+  color: var(--color-charcoal);
+}
+
+.recipe-tag.vegan {
+  background-color: var(--color-teal);
+  color: white;
+}
+
+/* Timeline */
+.timeline-section {
+  margin-top: var(--space-md);
+}
+
+.timeline-title {
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+  margin-bottom: var(--space-sm);
+}
+
+.timeline-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.timeline-table th,
+.timeline-table td {
+  border: 1px solid var(--color-gray-light);
+  padding: var(--space-xs) var(--space-sm);
+  text-align: left;
+}
+
+.timeline-table th {
+  background-color: var(--color-cream);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.timeline-time {
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-weight: 700;
+  white-space: nowrap;
+  width: 50px;
+}
+
+/* Task Sections */
+.recipe-instructions {
+  border-top: 2px solid var(--color-gray-light);
+  padding-top: var(--space-lg);
+}
+
+.task-section {
+  border-left: 3px solid var(--color-teal);
+  padding-left: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.task-section-title {
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.task-icon {
+  font-size: 1rem;
+}
+
+.task-steps {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.task-steps li {
+  padding: 4px 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.step-time {
+  display: inline-block;
+  margin-left: var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--color-gray);
+  font-style: italic;
+}
+
+/* Recipe Actions */
+.recipe-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: center;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-gray-light);
+}
+
+/* Legacy Recipe Detail (keep for backwards compat) */
 .recipe-detail {
   max-width: 800px;
   margin: 0 auto;
@@ -648,6 +895,75 @@ h4 { font-size: 1.25rem; }
   font-size: 0.875rem;
   color: var(--color-gray);
   margin-top: var(--space-xs);
+}
+
+/* Print Styles for Recipe */
+@media print {
+  .recipe-detail-new {
+    box-shadow: none;
+    padding: 0.25in;
+    max-width: 100%;
+  }
+
+  .recipe-header {
+    border-bottom-width: 2px;
+  }
+
+  .recipe-title {
+    font-size: 18pt;
+  }
+
+  .recipe-subtitle {
+    font-size: 10pt;
+  }
+
+  .recipe-two-column {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.25in;
+  }
+
+  .recipe-section-header {
+    font-size: 11pt;
+  }
+
+  .ingredients-group-title {
+    font-size: 9pt;
+  }
+
+  .ingredients-checklist li {
+    font-size: 10pt;
+    padding: 2px 0;
+  }
+
+  .setup-box {
+    padding: 8px;
+  }
+
+  .setup-box p {
+    font-size: 9pt;
+  }
+
+  .timeline-table {
+    font-size: 9pt;
+  }
+
+  .task-section {
+    break-inside: avoid;
+    margin-bottom: 12px;
+  }
+
+  .task-steps li {
+    font-size: 10pt;
+    padding: 2px 0;
+  }
+
+  .recipe-actions {
+    display: none;
+  }
+
+  .no-print {
+    display: none !important;
+  }
 }
 
 /* Day Card Actions */

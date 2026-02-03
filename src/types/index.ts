@@ -62,6 +62,7 @@ export interface Ingredient {
   amount: number;
   unit: string;
   section: StoreSection;
+  group?: string; // Recipe component group (e.g., "Glaze", "Proteins", "Vegetables")
 }
 
 export type StoreSection =
