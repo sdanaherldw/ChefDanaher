@@ -36,15 +36,25 @@ interface AppContextValue {
   refreshState: () => Promise<void>;
 }
 
+const defaultSettings = {
+  recipeDecayDays: 60,
+  suggestedRecipeDecayDays: 30,
+};
+
 const defaultState: AppState = {
   recipes: [],
   calendar: [],
-  settings: {
-    recipeDecayDays: 60,
-    suggestedRecipeDecayDays: 30,
-  },
+  settings: defaultSettings,
   version: 0,
 };
+
+// Ensure state has all required fields (backwards compatibility)
+function ensureStateComplete(state: AppState): AppState {
+  return {
+    ...state,
+    settings: state.settings || defaultSettings,
+  };
+}
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -77,7 +87,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     try {
       const { state: serverState } = await api.getState();
-      setState(serverState);
+      setState(ensureStateComplete(serverState));
     } catch (error) {
       console.error('Failed to fetch state:', error);
       addToast('Failed to sync state', 'error');
@@ -110,8 +120,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
           try {
             const { state: serverState } = await api.saveState(newState, currentState.version);
-            setState(serverState);
-            currentState = serverState;
+            const completeState = ensureStateComplete(serverState);
+            setState(completeState);
+            currentState = completeState;
 
             // Process any pending operations
             while (pendingOperationsRef.current.length > 0) {
@@ -121,13 +132,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
               try {
                 const { state: pendingServerState } = await api.saveState(pendingNewState, currentState.version);
-                setState(pendingServerState);
-                currentState = pendingServerState;
+                const completePendingState = ensureStateComplete(pendingServerState);
+                setState(completePendingState);
+                currentState = completePendingState;
               } catch (pendingError) {
                 if (pendingError instanceof ApiError && pendingError.status === 409) {
                   // Conflict on pending op - refresh and requeue
                   const conflictData = pendingError.data as { state: AppState };
-                  currentState = conflictData.state;
+                  currentState = ensureStateComplete(conflictData.state);
                   setState(currentState);
                   pendingOperationsRef.current.unshift(pendingOp);
                 } else {
@@ -141,7 +153,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (error instanceof ApiError && error.status === 409) {
               // Version conflict - get latest state and retry
               const conflictData = error.data as { state: AppState };
-              currentState = conflictData.state;
+              currentState = ensureStateComplete(conflictData.state);
               setState(currentState);
               retries++;
 
