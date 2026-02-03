@@ -236,7 +236,7 @@ export function FullMenuPage({ onBack }: FullMenuPageProps) {
 
   if (isLoading) {
     return (
-      <Layout showSettings={false}>
+      <Layout showSettings={false} showFullMenu={false} onLogoClick={onBack}>
         <motion.div
           className="loading"
           initial={{ opacity: 0 }}
@@ -252,7 +252,7 @@ export function FullMenuPage({ onBack }: FullMenuPageProps) {
   // Recipe detail modal
   if (selectedRecipe) {
     return (
-      <Layout showSettings={false}>
+      <Layout showSettings={false} showFullMenu={false} onLogoClick={onBack}>
         <RecipeDetail
           recipe={selectedRecipe}
           onClose={handleCloseDetail}
@@ -263,7 +263,7 @@ export function FullMenuPage({ onBack }: FullMenuPageProps) {
   }
 
   return (
-    <Layout showSettings={false}>
+    <Layout showSettings={false} showFullMenu={false} onLogoClick={onBack}>
       <motion.div
         className="full-menu-page"
         initial={{ opacity: 0 }}

@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from 'react';
+import { motion } from 'framer-motion';
 import { api } from '../../api/client';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../UI/Button';
+import { DinerSpinner } from '../UI/DinerSpinner';
 import { HOUSEHOLD } from '../../types';
 import type { GenerateRequest } from '../../types';
 
@@ -31,7 +33,7 @@ export function GenerateForm() {
     e.preventDefault();
 
     if (selectedDiners.length === 0) {
-      addToast('Select at least one diner', 'error');
+      addToast('Pick at least one hungry soul!', 'error');
       return;
     }
 
@@ -47,7 +49,7 @@ export function GenerateForm() {
         maxTime: formData.maxTime,
       });
       await addRecipe(recipe);
-      addToast(`Generated: ${recipe.name}`, 'success');
+      addToast(`Order up! ${recipe.name} is on the menu!`, 'success');
 
       // Reset optional fields
       setFormData((prev) => ({
@@ -57,16 +59,28 @@ export function GenerateForm() {
         specialNotes: '',
       }));
     } catch (error) {
-      addToast('Failed to generate recipe', 'error');
+      addToast("Whoops! We dropped that plate...", 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        style={{ minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <DinerSpinner context="recipe" />
+      </motion.div>
+    );
+  }
+
   return (
       <form onSubmit={handleSubmit} className="generate-form">
         <div className="form-group">
-          <label className="form-label">Who's Eating?</label>
+          <label className="form-label">Who's hungry?</label>
           <div className="diner-checkboxes">
             {HOUSEHOLD.map((member) => {
               const isSelected = selectedDiners.includes(member.id);
@@ -99,7 +113,7 @@ export function GenerateForm() {
 
         <div className="form-group">
           <label htmlFor="mealType" className="form-label">
-            Meal Type
+            What's cookin'?
           </label>
           <select
             id="mealType"
@@ -197,27 +211,12 @@ export function GenerateForm() {
 
         <Button
           type="submit"
-          disabled={isLoading || selectedDiners.length === 0}
+          disabled={selectedDiners.length === 0}
           style={{ width: '100%' }}
           className="generate-btn"
         >
-          {isLoading
-            ? 'Generating...'
-            : `Generate for ${selectedDiners.length} ${selectedDiners.length === 1 ? 'person' : 'people'}`}
+          Cook up something new
         </Button>
-
-        {isLoading && (
-          <p
-            style={{
-              textAlign: 'center',
-              fontSize: '0.875rem',
-              color: 'var(--color-gray)',
-              marginTop: 'var(--space-sm)',
-            }}
-          >
-            Creating your recipe...
-          </p>
-        )}
       </form>
   );
 }

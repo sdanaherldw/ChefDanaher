@@ -282,6 +282,13 @@ export function DashboardPage() {
     }
   }, []);
 
+  const handleLogoClick = useCallback(() => {
+    // Reset to main dashboard view
+    setSelectedRecipe(null);
+    setShowSettings(false);
+    setShowFullMenu(false);
+  }, []);
+
   if (isLoading) {
     return (
       <Layout>
@@ -320,6 +327,7 @@ export function DashboardPage() {
       <Layout
         onSettingsClick={() => setShowSettings(true)}
         onFullMenuClick={() => setShowFullMenu(true)}
+        onLogoClick={handleLogoClick}
       >
         <RecipeDetail
           recipe={selectedRecipe}
@@ -334,6 +342,7 @@ export function DashboardPage() {
     <Layout
       onSettingsClick={() => setShowSettings(true)}
       onFullMenuClick={() => setShowFullMenu(true)}
+      onLogoClick={handleLogoClick}
     >
       <DndContext
         sensors={sensors}

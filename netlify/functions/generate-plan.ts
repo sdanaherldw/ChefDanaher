@@ -413,7 +413,7 @@ export default async function handler(request: Request, context: Context) {
       attempts++;
 
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.2',
         messages: [
           {
             role: 'system',
@@ -470,27 +470,27 @@ export default async function handler(request: Request, context: Context) {
               break;
             }
           } else {
-            // Standard recipe validation
+            // Standard recipe validation (only when NOT using variants)
             if (dietary.isVegan && !recipe.dietaryInfo.isVegan) {
               lastError = `Recipe "${recipe.name}" is not vegan`;
               dietaryValid = false;
               break;
             }
-          }
-          if (dietary.isDairyFree && !recipe.dietaryInfo.isDairyFree) {
-            lastError = `Recipe "${recipe.name}" is not dairy-free`;
-            dietaryValid = false;
-            break;
-          }
-          if (dietary.isEggFree && !recipe.dietaryInfo.isEggFree) {
-            lastError = `Recipe "${recipe.name}" is not egg-free`;
-            dietaryValid = false;
-            break;
-          }
-          if (dietary.isDairyFree && recipe.dietaryInfo.hasCheese) {
-            lastError = `Recipe "${recipe.name}" has cheese but dairy-free required`;
-            dietaryValid = false;
-            break;
+            if (dietary.isDairyFree && !recipe.dietaryInfo.isDairyFree) {
+              lastError = `Recipe "${recipe.name}" is not dairy-free`;
+              dietaryValid = false;
+              break;
+            }
+            if (dietary.isEggFree && !recipe.dietaryInfo.isEggFree) {
+              lastError = `Recipe "${recipe.name}" is not egg-free`;
+              dietaryValid = false;
+              break;
+            }
+            if (dietary.isDairyFree && recipe.dietaryInfo.hasCheese) {
+              lastError = `Recipe "${recipe.name}" has cheese but dairy-free required`;
+              dietaryValid = false;
+              break;
+            }
           }
           if (recipe.totalTime > 40) {
             lastError = `Recipe "${recipe.name}" exceeds 40 minute time limit`;

@@ -7,6 +7,7 @@ import { useRepeatedClicks } from '../../hooks/useKeyboardShortcuts';
 interface HeaderProps {
   onSettingsClick?: () => void;
   onFullMenuClick?: () => void;
+  onLogoClick?: () => void;
   showSettings?: boolean;
   showFullMenu?: boolean;
 }
@@ -67,14 +68,21 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function Header({ onSettingsClick, onFullMenuClick, showSettings = true, showFullMenu = true }: HeaderProps) {
+export function Header({ onSettingsClick, onFullMenuClick, onLogoClick, showSettings = true, showFullMenu = true }: HeaderProps) {
   const { user, logout } = useAuth();
   const [showAbout, setShowAbout] = useState(false);
 
   // Easter egg: click logo 5 times to see the About panel
-  const handleLogoClick = useRepeatedClicks(5, () => {
+  const triggerEasterEgg = useRepeatedClicks(5, () => {
     setShowAbout(true);
   });
+
+  const handleLogoClick = () => {
+    triggerEasterEgg(); // Track for easter egg
+    if (onLogoClick) {
+      onLogoClick(); // Navigate home
+    }
+  };
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { addDays, startOfToday, format } from 'date-fns';
 import { DayCard } from './DayCard';
 import { useAppState } from '../../context/AppContext';
@@ -32,16 +33,27 @@ export function CalendarGrid({ onRecipeClick }: CalendarGridProps) {
 
   return (
     <div className="calendar-grid">
-      {days.map((date) => {
+      {days.map((date, index) => {
         const { recipe, groceriesPurchased } = getDayData(date);
         return (
-          <DayCard
+          <motion.div
             key={date.toISOString()}
-            date={date}
-            recipe={recipe}
-            groceriesPurchased={groceriesPurchased}
-            onRecipeClick={onRecipeClick}
-          />
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              type: 'spring',
+              stiffness: 300,
+              damping: 25,
+              delay: index * 0.06
+            }}
+          >
+            <DayCard
+              date={date}
+              recipe={recipe}
+              groceriesPurchased={groceriesPurchased}
+              onRecipeClick={onRecipeClick}
+            />
+          </motion.div>
         );
       })}
     </div>

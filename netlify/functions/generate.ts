@@ -403,7 +403,7 @@ export default async function handler(request: Request, context: Context) {
       attempts++;
 
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.2',
         messages: [
           {
             role: 'system',
@@ -452,26 +452,26 @@ export default async function handler(request: Request, context: Context) {
             continue;
           }
         } else {
-          // Standard recipe validation
+          // Standard recipe validation (only when NOT using variants)
           if (dietary.isVegan && !validated.dietaryInfo.isVegan) {
             lastError = 'Recipe is not vegan but vegan was required';
             continue;
           }
-        }
 
-        if (dietary.isDairyFree && !validated.dietaryInfo.isDairyFree) {
-          lastError = 'Recipe is not dairy-free but dairy-free was required';
-          continue;
-        }
+          if (dietary.isDairyFree && !validated.dietaryInfo.isDairyFree) {
+            lastError = 'Recipe is not dairy-free but dairy-free was required';
+            continue;
+          }
 
-        if (dietary.isEggFree && !validated.dietaryInfo.isEggFree) {
-          lastError = 'Recipe is not egg-free but egg-free was required';
-          continue;
-        }
+          if (dietary.isEggFree && !validated.dietaryInfo.isEggFree) {
+            lastError = 'Recipe is not egg-free but egg-free was required';
+            continue;
+          }
 
-        if (dietary.isDairyFree && validated.dietaryInfo.hasCheese) {
-          lastError = 'Recipe has cheese but dairy-free was required';
-          continue;
+          if (dietary.isDairyFree && validated.dietaryInfo.hasCheese) {
+            lastError = 'Recipe has cheese but dairy-free was required';
+            continue;
+          }
         }
 
         if (validated.totalTime > (maxTime || 40)) {

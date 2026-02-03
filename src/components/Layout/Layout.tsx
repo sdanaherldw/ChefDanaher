@@ -7,6 +7,7 @@ interface LayoutProps {
   showHeader?: boolean;
   onSettingsClick?: () => void;
   onFullMenuClick?: () => void;
+  onLogoClick?: () => void;
   showSettings?: boolean;
   showFullMenu?: boolean;
 }
@@ -16,6 +17,7 @@ export function Layout({
   showHeader = true,
   onSettingsClick,
   onFullMenuClick,
+  onLogoClick,
   showSettings = true,
   showFullMenu = true,
 }: LayoutProps) {
@@ -25,6 +27,7 @@ export function Layout({
         <Header
           onSettingsClick={onSettingsClick}
           onFullMenuClick={onFullMenuClick}
+          onLogoClick={onLogoClick}
           showSettings={showSettings}
           showFullMenu={showFullMenu}
         />

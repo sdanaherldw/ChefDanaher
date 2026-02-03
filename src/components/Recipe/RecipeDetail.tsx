@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import type { Recipe, Ingredient, RecipeStep } from '../../types';
 import { hasProteinVariants } from '../../types';
 import { Button } from '../UI/Button';
@@ -10,35 +11,57 @@ interface RecipeDetailProps {
 
 function IngredientList({ ingredients, title }: { ingredients: Ingredient[]; title?: string }) {
   return (
-    <div className="recipe-section">
+    <motion.div
+      className="recipe-section"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+    >
       <h3 className="recipe-section-title">{title || 'Ingredients'}</h3>
       <ul className="ingredient-list">
         {ingredients.map((ing, i) => (
-          <li key={i} className="ingredient-item">
+          <motion.li
+            key={i}
+            className="ingredient-item"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 + i * 0.03 }}
+          >
             <span>{ing.name}</span>
             <span>
               {ing.amount} {ing.unit}
             </span>
-          </li>
+          </motion.li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }
 
 function StepList({ steps, title }: { steps: RecipeStep[]; title?: string }) {
   return (
-    <div className="recipe-section">
+    <motion.div
+      className="recipe-section"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+    >
       <h3 className="recipe-section-title">{title || 'Instructions'}</h3>
       <ol className="step-list">
         {steps.map((step, i) => (
-          <li key={i} className="step-item">
+          <motion.li
+            key={i}
+            className="step-item"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 + i * 0.05 }}
+          >
             {step.instruction}
             <div className="step-duration">{step.duration} min</div>
-          </li>
+          </motion.li>
         ))}
       </ol>
-    </div>
+    </motion.div>
   );
 }
 
@@ -50,10 +73,31 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
   const isVariant = hasProteinVariants(recipe);
 
   return (
-    <div className="recipe-detail">
-      <div className="card">
-        <div className="recipe-detail-header">
-          <h2 className="recipe-detail-name">{recipe.name}</h2>
+    <motion.div
+      className="recipe-detail"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <motion.div
+        className="card"
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+      >
+        <motion.div
+          className="recipe-detail-header"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <motion.h2
+            className="recipe-detail-name"
+            layoutId={`recipe-title-${recipe.id}`}
+          >
+            {recipe.name}
+          </motion.h2>
           <p className="recipe-detail-description">{recipe.description}</p>
           <div className="recipe-detail-meta">
             <span>{recipe.totalTime} minutes</span>
@@ -61,13 +105,19 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
             <span>{recipe.equipment.join(', ')}</span>
           </div>
           <div className="recipe-tags" style={{ justifyContent: 'center', marginTop: 'var(--space-md)' }}>
-            {recipe.tags.map((tag) => (
-              <span key={tag} className={`tag ${tag === 'vegan' ? 'vegan' : ''}`}>
+            {recipe.tags.map((tag, index) => (
+              <motion.span
+                key={tag}
+                className={`tag ${tag === 'vegan' ? 'vegan' : ''}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.15 + index * 0.05 }}
+              >
                 {tag}
-              </span>
+              </motion.span>
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {isVariant ? (
           <>
@@ -84,11 +134,22 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
             )}
 
             {/* Protein Options Section */}
-            <div className="recipe-section">
+            <motion.div
+              className="recipe-section"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
               <h3 className="recipe-section-title">Protein Options</h3>
               <div className="protein-options-grid">
-                {recipe.proteinOptions?.map((option) => (
-                  <div key={option.id} className="protein-option-card">
+                {recipe.proteinOptions?.map((option, index) => (
+                  <motion.div
+                    key={option.id}
+                    className="protein-option-card"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 + index * 0.1 }}
+                  >
                     <div className="protein-option-header">
                       <h4 className="protein-option-name">{option.name}</h4>
                       {option.dietaryInfo.isVegan && (
@@ -121,10 +182,10 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
                         ))}
                       </ol>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           </>
         ) : (
           <>
@@ -138,7 +199,7 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
           </>
         )}
 
-        <div
+        <motion.div
           style={{
             display: 'flex',
             gap: 'var(--space-md)',
@@ -146,16 +207,19 @@ export function RecipeDetail({ recipe, onClose, onDelete }: RecipeDetailProps) {
             marginTop: 'var(--space-xl)',
           }}
           className="no-print"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
         >
           <Button variant="secondary" onClick={onClose}>
-            Back
+            Nevermind
           </Button>
           <Button onClick={handlePrint}>Print Recipe</Button>
           <Button variant="danger" onClick={onDelete}>
-            Delete
+            86 This
           </Button>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
