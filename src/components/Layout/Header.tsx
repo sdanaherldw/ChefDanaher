@@ -47,13 +47,16 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
           The Story
         </h2>
         <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
-          <strong>Birdie</strong> is a little robin who keeps the orders straight.
-          She's got a notepad, a sharp memory, and a soft spot for a well-organized menu.
+          <strong>Birdie</strong> is the heart of this kitchen. No fuss, no frills—just
+          good food, made with care, landing in front of you before you knew you were
+          hungry. You're gonna eat well. You're gonna love it. And somewhere between
+          the first bite and the last, you're gonna feel loved too.
         </p>
         <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
-          <strong>Ripsaw</strong> is a bear who runs the kitchen. He got his name
-          from the way he tears through prep work. Don't let the size fool you -
-          his plating is immaculate.
+          <strong>Ripsaw</strong> is... unpredictable. You never quite know what's
+          coming out of that kitchen. Could be genius. Could be chaos. Either way,
+          you're eating it. "Just try it," he'll say, sliding a plate your way.
+          "It's all you got."
         </p>
         <p style={{ color: 'var(--color-gray)', fontSize: '0.875rem', marginBottom: 'var(--space-lg)' }}>
           Together, they make sure your family eats well every night.

@@ -4,26 +4,33 @@ import { useAppState } from '../../context/AppContext';
 import { Button } from '../UI/Button';
 import { DinerSpinner } from '../UI/DinerSpinner';
 import { HOUSEHOLD } from '../../types';
-import type { Recipe } from '../../types';
+import type { Recipe, DayPlan } from '../../types';
 
 interface PlanPreview {
   plan: Array<{ date: string; recipe: Recipe }>;
   sharedIngredients: string[];
 }
 
-function getNextWeekdayDates(count: number): string[] {
+function getNextVacantWeekdayDates(count: number, calendar: DayPlan[]): string[] {
   const dates: string[] = [];
   const today = new Date();
   let current = new Date(today);
 
-  // Start from tomorrow
-  current.setDate(current.getDate() + 1);
+  // Build a set of dates that already have recipes
+  const occupiedDates = new Set(
+    calendar
+      .filter((day) => day.recipeId !== null)
+      .map((day) => day.date)
+  );
 
+  // Start from today (in case today is unplanned) or tomorrow
   while (dates.length < count) {
     const dayOfWeek = current.getDay();
-    // Skip weekends (0 = Sunday, 6 = Saturday)
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      dates.push(current.toISOString().split('T')[0]);
+    const dateStr = current.toISOString().split('T')[0];
+
+    // Skip weekends (0 = Sunday, 6 = Saturday) and occupied days
+    if (dayOfWeek !== 0 && dayOfWeek !== 6 && !occupiedDates.has(dateStr)) {
+      dates.push(dateStr);
     }
     current.setDate(current.getDate() + 1);
   }
@@ -41,7 +48,7 @@ function formatDate(dateStr: string): string {
 }
 
 export function AutoPlanForm() {
-  const { applyMealPlan, addToast } = useAppState();
+  const { state, applyMealPlan, addToast } = useAppState();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDiners, setSelectedDiners] = useState<string[]>(
     HOUSEHOLD.map((m) => m.id)
@@ -69,7 +76,7 @@ export function AutoPlanForm() {
     setPreview(null);
 
     try {
-      const targetDates = getNextWeekdayDates(numberOfDays);
+      const targetDates = getNextVacantWeekdayDates(numberOfDays, state.calendar);
       const response = await api.generateMealPlan({
         diners: selectedDiners,
         numberOfDays,
