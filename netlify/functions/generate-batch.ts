@@ -54,14 +54,33 @@ const RecipeStepSchema = z.object({
   parallel: z.array(z.string()).optional(),
 });
 
+// Protein option schema for variant recipes
+const ProteinOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  suitableFor: z.array(z.string()),
+  ingredients: z.array(IngredientSchema),
+  steps: z.array(RecipeStepSchema),
+  dietaryInfo: z.object({
+    isVegan: z.boolean(),
+    isDairyFree: z.boolean(),
+    isEggFree: z.boolean(),
+  }),
+});
+
 const RecipeSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   servings: z.number(),
   totalTime: z.number(),
-  ingredients: z.array(IngredientSchema),
-  steps: z.array(RecipeStepSchema),
+  // Legacy fields (optional for new variant recipes)
+  ingredients: z.array(IngredientSchema).optional(),
+  steps: z.array(RecipeStepSchema).optional(),
+  // New variant fields
+  sharedIngredients: z.array(IngredientSchema).optional(),
+  sharedSteps: z.array(RecipeStepSchema).optional(),
+  proteinOptions: z.array(ProteinOptionSchema).optional(),
   tags: z.array(z.string()),
   dietaryInfo: z.object({
     isVegan: z.boolean(),
@@ -82,12 +101,22 @@ interface GenerateBatchRequest {
   diners: string[];
 }
 
-function buildDietaryConstraints(diners: string[]): { constraints: string; isVegan: boolean; isDairyFree: boolean; isEggFree: boolean } {
-  let isVegan = false;
+function buildDietaryConstraints(diners: string[]): {
+  constraints: string;
+  isVegan: boolean;
+  isDairyFree: boolean;
+  isEggFree: boolean;
+  hasVeganDiner: boolean;
+  hasMeatEater: boolean;
+  veganDiners: string[];
+  meatEaters: string[];
+} {
   let isDairyFree = false;
   let isEggFree = false;
 
   const dinerDetails: string[] = [];
+  const veganDiners: string[] = [];
+  const meatEaters: string[] = [];
 
   for (const dinerId of diners) {
     const diner = HOUSEHOLD[dinerId as keyof typeof HOUSEHOLD];
@@ -96,7 +125,9 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
     dinerDetails.push(`- ${diner.name}: ${diner.description}`);
 
     if (diner.restrictions.includes('no-meat') && diner.restrictions.includes('no-fish')) {
-      isVegan = true;
+      veganDiners.push(dinerId);
+    } else {
+      meatEaters.push(dinerId);
     }
     if (diner.restrictions.includes('no-dairy')) {
       isDairyFree = true;
@@ -106,6 +137,10 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
     }
   }
 
+  const hasVeganDiner = veganDiners.length > 0;
+  const hasMeatEater = meatEaters.length > 0;
+  const isVegan = hasVeganDiner && !hasMeatEater;
+
   if (isVegan) {
     isDairyFree = true;
     isEggFree = true;
@@ -113,23 +148,7 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
 
   let constraints = `DINERS AND THEIR DIETARY REQUIREMENTS:\n${dinerDetails.join('\n')}\n\n`;
 
-  constraints += 'COMBINED DIETARY REQUIREMENTS (ALL recipes MUST satisfy ALL of these):\n';
-
-  if (isVegan) {
-    constraints += '- FULLY VEGAN: No meat, poultry, fish, seafood, dairy, eggs, honey, or any animal products\n';
-  } else {
-    if (isDairyFree) {
-      constraints += '- DAIRY-FREE: No milk, cheese, butter, cream, yogurt, or any dairy products\n';
-    }
-    if (isEggFree) {
-      constraints += '- EGG-FREE: No eggs or egg-based ingredients (mayo, some pastas, etc.)\n';
-    }
-    if (!isDairyFree && !isEggFree) {
-      constraints += '- No dietary restrictions - all ingredients allowed\n';
-    }
-  }
-
-  return { constraints, isVegan, isDairyFree, isEggFree };
+  return { constraints, isVegan, isDairyFree, isEggFree, hasVeganDiner, hasMeatEater, veganDiners, meatEaters };
 }
 
 function buildPrompt(diners: string[]): { prompt: string; dietary: ReturnType<typeof buildDietaryConstraints> } {
@@ -137,23 +156,125 @@ function buildPrompt(diners: string[]): { prompt: string; dietary: ReturnType<ty
   const dietary = buildDietaryConstraints(diners);
   const timestamp = Date.now();
 
-  const prompt = `You are a creative meal planning assistant. Generate 10 DIVERSE and INTERESTING dinner recipe ideas that meet ALL requirements below.
+  // Determine if we need protein variants
+  const needsVariants = dietary.hasVeganDiner && dietary.hasMeatEater;
 
-${dietary.constraints}
-
-DIVERSITY REQUIREMENTS (CRITICAL - each recipe must be distinctly different):
-Generate recipes across these categories:
-1. Different proteins: tofu, tempeh, chickpeas, lentils, seitan, black beans, edamame, Beyond meat
-2. Different cuisines: Asian, Mediterranean, Latin American, Indian, American comfort, African, Middle Eastern
-3. Different cooking styles: stir-fry, baked, soup/stew, bowl/grain, pasta, wrap/taco, curry, salad-based
-
-EQUIPMENT AVAILABLE (in order of preference):
+  const equipmentSection = `EQUIPMENT AVAILABLE (in order of preference):
 1. **Breville Joule Oven** (PREFERRED) - Countertop convection oven
 2. **Vitamix** - High-powered blender for sauces, soups
 3. **Rice Cooker** - ALWAYS use for rice
 4. **Stovetop** (gas burners) with wok, frying pans
 5. **Microwave** - For quick tasks
-6. **Wall Oven** (LEAST PREFERRED) - Only if necessary
+6. **Wall Oven** (LEAST PREFERRED) - Only if necessary`;
+
+  let prompt: string;
+
+  if (needsVariants) {
+    const veganNames = dietary.veganDiners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
+    const meatNames = dietary.meatEaters.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
+
+    prompt = `You are a creative meal planning assistant. Generate 10 DIVERSE dinner recipes with PROTEIN VARIANTS to accommodate both vegan and meat-eating diners.
+
+${dietary.constraints}
+
+PROTEIN VARIANTS REQUIRED:
+- Vegan diners: ${veganNames.join(', ')}
+- Meat-eating diners: ${meatNames.join(', ')}
+
+Each recipe should have:
+1. SHARED COMPONENTS (sharedIngredients, sharedSteps): Base that everyone eats
+2. PROTEIN OPTIONS (proteinOptions): One vegan, one meat option
+
+CRITICAL SHARED SAUCE RULE:
+All shared sauces/marinades MUST be vegan-safe! No fish sauce, oyster sauce, or anchovy-based ingredients.
+
+DIVERSITY REQUIREMENTS:
+- Different base dishes: bowls, stir-fry, tacos, pasta, curries, etc.
+- Different cuisines: Asian, Mediterranean, Latin American, Indian, etc.
+- Varied cooking styles
+
+${equipmentSection}
+
+TIME CONSTRAINT: Each recipe <= 45 minutes
+
+RESPONSE FORMAT:
+{
+  "recipes": [
+    {
+      "id": "batch-${timestamp}-1",
+      "name": "Recipe Name",
+      "description": "Appetizing description",
+      "servings": ${servings},
+      "totalTime": <max 45>,
+      "sharedIngredients": [
+        {"name": "jasmine rice", "amount": 2, "unit": "cups", "section": "pantry"}
+      ],
+      "sharedSteps": [
+        {"instruction": "Cook rice in rice cooker", "duration": 20}
+      ],
+      "proteinOptions": [
+        {
+          "id": "vegan",
+          "name": "Crispy Tofu",
+          "suitableFor": ${JSON.stringify(dietary.veganDiners)},
+          "ingredients": [{"name": "extra-firm tofu", "amount": 14, "unit": "oz", "section": "dairy-free"}],
+          "steps": [{"instruction": "Press and pan-fry tofu", "duration": 10}],
+          "dietaryInfo": {"isVegan": true, "isDairyFree": true, "isEggFree": true}
+        },
+        {
+          "id": "meat",
+          "name": "Grilled Chicken",
+          "suitableFor": ${JSON.stringify(dietary.meatEaters)},
+          "ingredients": [{"name": "chicken breast", "amount": 1, "unit": "lb", "section": "meat"}],
+          "steps": [{"instruction": "Season and grill chicken", "duration": 12}],
+          "dietaryInfo": {"isVegan": false, "isDairyFree": ${dietary.isDairyFree}, "isEggFree": ${dietary.isEggFree}}
+        }
+      ],
+      "tags": ["cuisine", "style"],
+      "dietaryInfo": {"isVegan": false, "isDairyFree": ${dietary.isDairyFree}, "isEggFree": ${dietary.isEggFree}, "hasCheese": false},
+      "equipment": ["Rice Cooker", "Stovetop"],
+      "suitableFor": ${JSON.stringify(diners)},
+      "createdAt": "${new Date().toISOString()}"
+    }
+  ]
+}
+
+Generate exactly 10 recipes (batch-${timestamp}-1 through batch-${timestamp}-10).
+
+CRITICAL:
+- Each recipe has sharedIngredients/sharedSteps + proteinOptions (no top-level ingredients/steps)
+- Each proteinOptions has exactly 2 items: vegan and meat
+- Vegan option must have isVegan: true
+- Meat option should feature delicious meat/fish/poultry
+- Overall dietaryInfo.isVegan must be false
+- Return ONLY JSON`;
+
+  } else {
+    // Standard mode - compatible dietary needs
+    const dietaryReqs = dietary.isVegan
+      ? '- FULLY VEGAN: No meat, poultry, fish, seafood, dairy, eggs, honey'
+      : dietary.isDairyFree && dietary.isEggFree
+      ? '- DAIRY-FREE & EGG-FREE'
+      : dietary.isDairyFree
+      ? '- DAIRY-FREE'
+      : dietary.isEggFree
+      ? '- EGG-FREE'
+      : '- No restrictions';
+
+    prompt = `You are a creative meal planning assistant. Generate 10 DIVERSE and INTERESTING dinner recipe ideas that meet ALL requirements below.
+
+${dietary.constraints}
+
+COMBINED DIETARY REQUIREMENTS:
+${dietaryReqs}
+
+DIVERSITY REQUIREMENTS (CRITICAL - each recipe must be distinctly different):
+Generate recipes across these categories:
+1. Different proteins: ${dietary.isVegan ? 'tofu, tempeh, chickpeas, lentils, seitan, black beans, edamame' : 'chicken, beef, pork, fish, shrimp, tofu, tempeh'}
+2. Different cuisines: Asian, Mediterranean, Latin American, Indian, American comfort, African, Middle Eastern
+3. Different cooking styles: stir-fry, baked, soup/stew, bowl/grain, pasta, wrap/taco, curry, salad-based
+
+${equipmentSection}
 
 TIME CONSTRAINT:
 - Each recipe must be completable in 45 minutes or less
@@ -207,6 +328,7 @@ CRITICAL REQUIREMENTS:
 - totalTime must be <= 45 for each recipe
 - The description should be an appetizing narrative, not a list
 - Return ONLY the JSON object, no other text`;
+  }
 
   return { prompt, dietary };
 }
@@ -286,12 +408,36 @@ export default async function handler(request: Request, context: Context) {
         }
 
         // Validate dietary requirements for each recipe
+        const needsVariants = dietary.hasVeganDiner && dietary.hasMeatEater;
         let dietaryValid = true;
         for (const recipe of validated.recipes) {
-          if (dietary.isVegan && !recipe.dietaryInfo.isVegan) {
-            lastError = `Recipe "${recipe.name}" is not vegan`;
-            dietaryValid = false;
-            break;
+          const isVariantRecipe = recipe.proteinOptions && recipe.proteinOptions.length > 0;
+
+          if (needsVariants) {
+            // Variant recipe validation
+            if (recipe.dietaryInfo.isVegan) {
+              lastError = `Recipe "${recipe.name}" should not be marked fully vegan (has meat option)`;
+              dietaryValid = false;
+              break;
+            }
+            if (!isVariantRecipe || recipe.proteinOptions!.length < 2) {
+              lastError = `Recipe "${recipe.name}" must have protein options`;
+              dietaryValid = false;
+              break;
+            }
+            const veganOption = recipe.proteinOptions!.find(o => o.id === 'vegan');
+            if (!veganOption || !veganOption.dietaryInfo.isVegan) {
+              lastError = `Recipe "${recipe.name}" must have a vegan protein option`;
+              dietaryValid = false;
+              break;
+            }
+          } else {
+            // Standard recipe validation
+            if (dietary.isVegan && !recipe.dietaryInfo.isVegan) {
+              lastError = `Recipe "${recipe.name}" is not vegan`;
+              dietaryValid = false;
+              break;
+            }
           }
           if (dietary.isDairyFree && !recipe.dietaryInfo.isDairyFree) {
             lastError = `Recipe "${recipe.name}" is not dairy-free`;

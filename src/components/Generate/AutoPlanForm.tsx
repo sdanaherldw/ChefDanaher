@@ -57,25 +57,6 @@ export function AutoPlanForm() {
     );
   };
 
-  const getDietarySummary = () => {
-    if (selectedDiners.length === 0) return '';
-
-    const hasShane = selectedDiners.includes('shane');
-    const hasBrady = selectedDiners.includes('brady');
-    const hasLauren = selectedDiners.includes('lauren');
-
-    if (hasShane) {
-      return 'Vegan recipes (for Shane)';
-    }
-    if (hasBrady) {
-      return 'Dairy-free & egg-free (for Brady)';
-    }
-    if (hasLauren) {
-      return 'Dairy-free (for Lauren)';
-    }
-    return 'No dietary restrictions';
-  };
-
   const handleGenerate = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -200,9 +181,6 @@ export function AutoPlanForm() {
             );
           })}
         </div>
-        {selectedDiners.length > 0 && (
-          <p className="dietary-summary">{getDietarySummary()}</p>
-        )}
       </div>
 
       <div className="form-group">
@@ -225,6 +203,7 @@ export function AutoPlanForm() {
         type="submit"
         disabled={selectedDiners.length === 0}
         style={{ width: '100%' }}
+        className="generate-btn"
       >
         Generate {numberOfDays}-Day Plan
       </Button>

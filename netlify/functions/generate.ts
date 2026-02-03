@@ -54,14 +54,33 @@ const RecipeStepSchema = z.object({
   parallel: z.array(z.string()).optional(),
 });
 
+// Protein option schema for variant recipes
+const ProteinOptionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  suitableFor: z.array(z.string()),
+  ingredients: z.array(IngredientSchema),
+  steps: z.array(RecipeStepSchema),
+  dietaryInfo: z.object({
+    isVegan: z.boolean(),
+    isDairyFree: z.boolean(),
+    isEggFree: z.boolean(),
+  }),
+});
+
 const RecipeSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
   servings: z.number(),
   totalTime: z.number(),
-  ingredients: z.array(IngredientSchema),
-  steps: z.array(RecipeStepSchema),
+  // Legacy fields (optional for new variant recipes)
+  ingredients: z.array(IngredientSchema).optional(),
+  steps: z.array(RecipeStepSchema).optional(),
+  // New variant fields
+  sharedIngredients: z.array(IngredientSchema).optional(),
+  sharedSteps: z.array(RecipeStepSchema).optional(),
+  proteinOptions: z.array(ProteinOptionSchema).optional(),
   tags: z.array(z.string()),
   dietaryInfo: z.object({
     isVegan: z.boolean(),
@@ -83,12 +102,22 @@ interface GenerateRequest {
   maxTime?: number;
 }
 
-function buildDietaryConstraints(diners: string[]): { constraints: string; isVegan: boolean; isDairyFree: boolean; isEggFree: boolean } {
-  let isVegan = false;
+function buildDietaryConstraints(diners: string[]): {
+  constraints: string;
+  isVegan: boolean;
+  isDairyFree: boolean;
+  isEggFree: boolean;
+  hasVeganDiner: boolean;
+  hasMeatEater: boolean;
+  veganDiners: string[];
+  meatEaters: string[];
+} {
   let isDairyFree = false;
   let isEggFree = false;
 
   const dinerDetails: string[] = [];
+  const veganDiners: string[] = [];
+  const meatEaters: string[] = [];
 
   for (const dinerId of diners) {
     const diner = HOUSEHOLD[dinerId as keyof typeof HOUSEHOLD];
@@ -97,7 +126,9 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
     dinerDetails.push(`- ${diner.name}: ${diner.description}`);
 
     if (diner.restrictions.includes('no-meat') && diner.restrictions.includes('no-fish')) {
-      isVegan = true; // If no meat and no fish, treat as vegan requirement
+      veganDiners.push(dinerId);
+    } else {
+      meatEaters.push(dinerId);
     }
     if (diner.restrictions.includes('no-dairy')) {
       isDairyFree = true;
@@ -107,7 +138,12 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
     }
   }
 
-  // If vegan, it implies dairy-free and egg-free
+  const hasVeganDiner = veganDiners.length > 0;
+  const hasMeatEater = meatEaters.length > 0;
+  // Only fully vegan if ALL diners are vegan (no meat eaters)
+  const isVegan = hasVeganDiner && !hasMeatEater;
+
+  // If fully vegan, it implies dairy-free and egg-free
   if (isVegan) {
     isDairyFree = true;
     isEggFree = true;
@@ -115,35 +151,19 @@ function buildDietaryConstraints(diners: string[]): { constraints: string; isVeg
 
   let constraints = `DINERS AND THEIR DIETARY REQUIREMENTS:\n${dinerDetails.join('\n')}\n\n`;
 
-  constraints += 'COMBINED DIETARY REQUIREMENTS (recipe MUST satisfy ALL of these):\n';
-
-  if (isVegan) {
-    constraints += '- FULLY VEGAN: No meat, poultry, fish, seafood, dairy, eggs, honey, or any animal products\n';
-  } else {
-    if (isDairyFree) {
-      constraints += '- DAIRY-FREE: No milk, cheese, butter, cream, yogurt, or any dairy products\n';
-    }
-    if (isEggFree) {
-      constraints += '- EGG-FREE: No eggs or egg-based ingredients (mayo, some pastas, etc.)\n';
-    }
-    if (!isDairyFree && !isEggFree) {
-      constraints += '- No dietary restrictions - all ingredients allowed\n';
-    }
-  }
-
-  return { constraints, isVegan, isDairyFree, isEggFree };
+  return { constraints, isVegan, isDairyFree, isEggFree, hasVeganDiner, hasMeatEater, veganDiners, meatEaters };
 }
 
 function buildPrompt(request: GenerateRequest): { prompt: string; dietary: ReturnType<typeof buildDietaryConstraints> } {
   const maxTime = request.maxTime || 40;
   const servings = request.diners.length;
   const dietary = buildDietaryConstraints(request.diners);
+  const timestamp = Date.now();
 
-  const prompt = `You are a recipe generator for a family dinner planning app. Generate a recipe that meets ALL requirements below.
+  // Determine if we need protein variants (mixed dietary needs)
+  const needsVariants = dietary.hasVeganDiner && dietary.hasMeatEater;
 
-${dietary.constraints}
-
-EQUIPMENT AVAILABLE (in order of preference - use higher-preference items when possible):
+  const equipmentSection = `EQUIPMENT AVAILABLE (in order of preference - use higher-preference items when possible):
 1. **Breville Joule Oven** (PREFERRED) - Countertop convection oven with precise temperature control. Use this for roasting, baking, sheet pan meals.
 2. **Vitamix** - High-powered blender for sauces, soups, smoothies, dressings.
 3. **Rice Cooker** - ALWAYS use this for rice. Never cook rice on the stovetop.
@@ -154,23 +174,146 @@ EQUIPMENT AVAILABLE (in order of preference - use higher-preference items when p
    - Japanese carbon steel wok (great for stir-fry)
    - Stainless steel pasta pot
 5. **Microwave** - Good for quick tasks like steaming sweet potatoes, reheating, softening vegetables.
-6. **Wall Oven** (LEAST PREFERRED) - Only use if the Joule can't handle the job (e.g., very large items).
+6. **Wall Oven** (LEAST PREFERRED) - Only use if the Joule can't handle the job (e.g., very large items).`;
+
+  const requestDetails = `REQUEST DETAILS:
+- Meal type: ${request.mealType}
+${request.cuisine ? `- Cuisine style: ${request.cuisine}` : ''}
+${request.mainIngredient ? `- Feature this ingredient: ${request.mainIngredient}` : ''}
+${request.specialNotes ? `- Special notes: ${request.specialNotes}` : ''}
+- Servings: ${servings} (cooking for: ${request.diners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean).join(', ')})`;
+
+  let prompt: string;
+
+  if (needsVariants) {
+    // PROTEIN VARIANTS MODE - mixed vegan and meat eaters
+    const veganNames = dietary.veganDiners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
+    const meatNames = dietary.meatEaters.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
+
+    prompt = `You are a recipe generator for a family dinner planning app. Generate a recipe with PROTEIN VARIANTS to accommodate both vegan and meat-eating diners.
+
+${dietary.constraints}
+
+PROTEIN VARIANTS REQUIRED:
+This meal has diners with different dietary needs:
+- Vegan diners: ${veganNames.join(', ')} (need plant-based protein)
+- Meat-eating diners: ${meatNames.join(', ')} (can have animal protein)
+
+Generate ONE recipe with:
+1. SHARED COMPONENTS (sharedIngredients, sharedSteps): Rice, vegetables, sauces, garnishes that EVERYONE eats
+2. PROTEIN OPTIONS (proteinOptions): Different protein preparations for different diners
+
+CRITICAL SHARED SAUCE RULE:
+All shared sauces, marinades, and dressings MUST be vegan-safe since the vegan diners will eat them!
+- Use vegan gochujang (no fish sauce)
+- Use vegan Worcestershire or substitute
+- No fish sauce, oyster sauce, or anchovy-based ingredients in shared components
+- Shared components must be: dairy-free=${dietary.isDairyFree}, egg-free=${dietary.isEggFree}
+
+${equipmentSection}
 
 TIME CONSTRAINT:
 - Maximum total time: ${maxTime} minutes (from start to food on table)
 - Include parallel steps where possible to optimize time
 
-REQUEST DETAILS:
-- Meal type: ${request.mealType}
-${request.cuisine ? `- Cuisine style: ${request.cuisine}` : ''}
-${request.mainIngredient ? `- Feature this ingredient: ${request.mainIngredient}` : ''}
-${request.specialNotes ? `- Special notes: ${request.specialNotes}` : ''}
-- Servings: ${servings} (cooking for: ${request.diners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean).join(', ')})
+${requestDetails}
 
 RESPONSE FORMAT:
 Return a JSON object matching this exact structure:
 {
-  "id": "unique-id-string-${Date.now()}",
+  "id": "recipe-${timestamp}",
+  "name": "Recipe Name",
+  "description": "Brief appetizing description",
+  "servings": ${servings},
+  "totalTime": <number in minutes, must be <= ${maxTime}>,
+  "sharedIngredients": [
+    {
+      "name": "ingredient name (rice, vegetables, vegan sauce, etc.)",
+      "amount": <number>,
+      "unit": "unit (cups, tbsp, etc.)",
+      "section": "<one of: produce, meat, pantry, dairy-free, frozen, bakery, other>"
+    }
+  ],
+  "sharedSteps": [
+    {
+      "instruction": "Step for shared components (cooking rice, making sauce, etc.)",
+      "duration": <minutes>
+    }
+  ],
+  "proteinOptions": [
+    {
+      "id": "vegan",
+      "name": "Crispy Glazed Tofu",
+      "suitableFor": ${JSON.stringify(dietary.veganDiners)},
+      "ingredients": [
+        {"name": "extra-firm tofu", "amount": 14, "unit": "oz", "section": "dairy-free"}
+      ],
+      "steps": [
+        {"instruction": "Press and cube tofu, then pan-fry until golden", "duration": 10}
+      ],
+      "dietaryInfo": {"isVegan": true, "isDairyFree": true, "isEggFree": true}
+    },
+    {
+      "id": "meat",
+      "name": "Grilled Steak Strips",
+      "suitableFor": ${JSON.stringify(dietary.meatEaters)},
+      "ingredients": [
+        {"name": "flank steak", "amount": 1, "unit": "lb", "section": "meat"}
+      ],
+      "steps": [
+        {"instruction": "Slice and grill steak to desired doneness", "duration": 8}
+      ],
+      "dietaryInfo": {"isVegan": false, "isDairyFree": ${dietary.isDairyFree}, "isEggFree": ${dietary.isEggFree}}
+    }
+  ],
+  "tags": ["relevant", "tags", "for", "filtering"],
+  "dietaryInfo": {
+    "isVegan": false,
+    "isDairyFree": ${dietary.isDairyFree},
+    "isEggFree": ${dietary.isEggFree},
+    "hasCheese": false
+  },
+  "equipment": ["list of equipment used"],
+  "suitableFor": ${JSON.stringify(request.diners)},
+  "createdAt": "${new Date().toISOString()}"
+}
+
+CRITICAL REQUIREMENTS:
+- sharedIngredients and sharedSteps are the base everyone eats (MUST be vegan-safe for sauces!)
+- proteinOptions array has exactly 2 options: one "vegan" and one "meat"
+- The vegan option must have isVegan: true
+- The meat option should feature a delicious meat/fish/poultry protein
+- dietaryInfo.isVegan for the overall recipe MUST be false (since meat option exists)
+- dietaryInfo.isDairyFree MUST be ${dietary.isDairyFree}
+- dietaryInfo.isEggFree MUST be ${dietary.isEggFree}
+- dietaryInfo.hasCheese MUST be false
+- totalTime MUST be <= ${maxTime}
+- Return ONLY the JSON object, no other text`;
+
+  } else {
+    // STANDARD MODE - everyone has compatible dietary needs (all vegan OR no vegans)
+    prompt = `You are a recipe generator for a family dinner planning app. Generate a recipe that meets ALL requirements below.
+
+${dietary.constraints}
+
+COMBINED DIETARY REQUIREMENTS (recipe MUST satisfy ALL of these):
+${dietary.isVegan ? '- FULLY VEGAN: No meat, poultry, fish, seafood, dairy, eggs, honey, or any animal products' : ''}
+${!dietary.isVegan && dietary.isDairyFree ? '- DAIRY-FREE: No milk, cheese, butter, cream, yogurt, or any dairy products' : ''}
+${!dietary.isVegan && dietary.isEggFree ? '- EGG-FREE: No eggs or egg-based ingredients (mayo, some pastas, etc.)' : ''}
+${!dietary.isVegan && !dietary.isDairyFree && !dietary.isEggFree ? '- No dietary restrictions - all ingredients allowed' : ''}
+
+${equipmentSection}
+
+TIME CONSTRAINT:
+- Maximum total time: ${maxTime} minutes (from start to food on table)
+- Include parallel steps where possible to optimize time
+
+${requestDetails}
+
+RESPONSE FORMAT:
+Return a JSON object matching this exact structure:
+{
+  "id": "recipe-${timestamp}",
   "name": "Recipe Name",
   "description": "Brief appetizing description",
   "servings": ${servings},
@@ -211,6 +354,7 @@ CRITICAL REQUIREMENTS:
 - Prefer Joule Oven over wall oven
 - ALWAYS use rice cooker for rice
 - Return ONLY the JSON object, no other text`;
+  }
 
   return { prompt, dietary };
 }
@@ -285,10 +429,34 @@ export default async function handler(request: Request, context: Context) {
         const parsed = JSON.parse(content);
         const validated = RecipeSchema.parse(parsed);
 
+        // Determine if this is a variant recipe
+        const isVariantRecipe = validated.proteinOptions && validated.proteinOptions.length > 0;
+        const needsVariants = dietary.hasVeganDiner && dietary.hasMeatEater;
+
         // Validate dietary requirements match what we requested
-        if (dietary.isVegan && !validated.dietaryInfo.isVegan) {
-          lastError = 'Recipe is not vegan but vegan was required';
-          continue;
+        if (needsVariants) {
+          // For variant recipes, overall isVegan should be false (we have meat option)
+          if (validated.dietaryInfo.isVegan) {
+            lastError = 'Variant recipe should not be marked as fully vegan';
+            continue;
+          }
+          // Validate we have protein options
+          if (!isVariantRecipe || validated.proteinOptions!.length < 2) {
+            lastError = 'Variant recipe must have at least 2 protein options';
+            continue;
+          }
+          // Validate vegan option exists and is actually vegan
+          const veganOption = validated.proteinOptions!.find(o => o.id === 'vegan');
+          if (!veganOption || !veganOption.dietaryInfo.isVegan) {
+            lastError = 'Variant recipe must have a vegan protein option marked as vegan';
+            continue;
+          }
+        } else {
+          // Standard recipe validation
+          if (dietary.isVegan && !validated.dietaryInfo.isVegan) {
+            lastError = 'Recipe is not vegan but vegan was required';
+            continue;
+          }
         }
 
         if (dietary.isDairyFree && !validated.dietaryInfo.isDairyFree) {

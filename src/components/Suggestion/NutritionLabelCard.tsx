@@ -1,10 +1,14 @@
 import type { Recipe } from '../../types';
+import { hasProteinVariants, getAllIngredients } from '../../types';
 
 interface NutritionLabelCardProps {
   recipe: Recipe;
 }
 
 export function NutritionLabelCard({ recipe }: NutritionLabelCardProps) {
+  const isVariant = hasProteinVariants(recipe);
+  const allIngredients = getAllIngredients(recipe);
+
   return (
     <div className="nutrition-label">
       <div className="nutrition-label-header">
@@ -27,22 +31,73 @@ export function NutritionLabelCard({ recipe }: NutritionLabelCardProps) {
           <span className="nutrition-label-meta-label">Time</span>
           <span className="nutrition-label-meta-value">{recipe.totalTime} min</span>
         </div>
+        {isVariant && (
+          <>
+            <div className="nutrition-label-meta-divider">|</div>
+            <div className="nutrition-label-meta-item">
+              <span className="nutrition-label-meta-label">Options</span>
+              <span className="nutrition-label-meta-value">{recipe.proteinOptions?.length || 0}</span>
+            </div>
+          </>
+        )}
       </div>
 
-      <div className="nutrition-label-section">
-        <div className="nutrition-label-section-title">Ingredients</div>
-        <ul className="nutrition-label-ingredients">
-          {recipe.ingredients.map((ingredient, index) => (
-            <li key={index} className="nutrition-label-ingredient">
-              <span className="nutrition-label-ingredient-name">{ingredient.name}</span>
-              <span className="nutrition-label-ingredient-dots" />
-              <span className="nutrition-label-ingredient-amount">
-                {ingredient.amount} {ingredient.unit}
-              </span>
-            </li>
+      {isVariant ? (
+        <>
+          {/* Shared Base Ingredients */}
+          {recipe.sharedIngredients && recipe.sharedIngredients.length > 0 && (
+            <div className="nutrition-label-section">
+              <div className="nutrition-label-section-title">Shared Base</div>
+              <ul className="nutrition-label-ingredients">
+                {recipe.sharedIngredients.map((ingredient, index) => (
+                  <li key={index} className="nutrition-label-ingredient">
+                    <span className="nutrition-label-ingredient-name">{ingredient.name}</span>
+                    <span className="nutrition-label-ingredient-dots" />
+                    <span className="nutrition-label-ingredient-amount">
+                      {ingredient.amount} {ingredient.unit}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Protein Options */}
+          {recipe.proteinOptions?.map((option) => (
+            <div key={option.id} className="nutrition-label-section">
+              <div className="nutrition-label-section-title">
+                {option.name} {option.dietaryInfo.isVegan && '(V)'}
+              </div>
+              <ul className="nutrition-label-ingredients">
+                {option.ingredients.map((ingredient, index) => (
+                  <li key={index} className="nutrition-label-ingredient">
+                    <span className="nutrition-label-ingredient-name">{ingredient.name}</span>
+                    <span className="nutrition-label-ingredient-dots" />
+                    <span className="nutrition-label-ingredient-amount">
+                      {ingredient.amount} {ingredient.unit}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
-      </div>
+        </>
+      ) : (
+        <div className="nutrition-label-section">
+          <div className="nutrition-label-section-title">Ingredients</div>
+          <ul className="nutrition-label-ingredients">
+            {allIngredients.map((ingredient, index) => (
+              <li key={index} className="nutrition-label-ingredient">
+                <span className="nutrition-label-ingredient-name">{ingredient.name}</span>
+                <span className="nutrition-label-ingredient-dots" />
+                <span className="nutrition-label-ingredient-amount">
+                  {ingredient.amount} {ingredient.unit}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="nutrition-label-description">
         "{recipe.description}"

@@ -1502,3 +1502,86 @@ h4 { font-size: 1.25rem; }
   text-align: center;
   margin-top: var(--space-md);
 }
+
+/* Protein Options Grid */
+.protein-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+  margin-top: var(--space-md);
+}
+
+.protein-option-card {
+  background-color: var(--color-cream);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  border: 2px solid var(--color-gray-light);
+  transition: all var(--transition-fast);
+}
+
+.protein-option-card:hover {
+  border-color: var(--color-teal);
+  box-shadow: var(--shadow-md);
+}
+
+.protein-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--color-teal);
+}
+
+.protein-option-name {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+  margin: 0;
+}
+
+.protein-option-section {
+  margin-top: var(--space-md);
+}
+
+.protein-option-section h5 {
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--color-gray);
+  margin: 0 0 var(--space-sm);
+}
+
+.ingredient-list.compact,
+.step-list.compact {
+  font-size: 0.875rem;
+}
+
+.step-list.compact .step-item {
+  padding: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  padding-left: var(--space-xl);
+}
+
+.step-list.compact .step-item::before {
+  font-size: 1rem;
+  left: var(--space-sm);
+  top: var(--space-sm);
+}
+
+/* Generate Button Hover Effects */
+.generate-btn.btn-primary:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 8px 25px rgba(74, 155, 143, 0.4),
+    0 0 20px rgba(74, 155, 143, 0.2);
+  background-color: var(--color-teal);
+}
+
+.generate-btn.btn-primary:active:not(:disabled) {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow:
+    0 4px 15px rgba(74, 155, 143, 0.3),
+    0 0 10px rgba(74, 155, 143, 0.15);
+}

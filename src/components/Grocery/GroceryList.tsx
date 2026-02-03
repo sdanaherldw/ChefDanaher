@@ -3,6 +3,7 @@ import { format, addDays, startOfToday } from 'date-fns';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../UI/Button';
 import type { StoreSection, GroceryItem } from '../../types';
+import { getAllIngredients } from '../../types';
 
 const SECTION_ORDER: StoreSection[] = [
   'produce',
@@ -61,11 +62,13 @@ export function GroceryList() {
       })
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
-    // Aggregate ingredients
+    // Aggregate ingredients using getAllIngredients helper
+    // This handles both legacy recipes and variant recipes (shared + all protein options)
     const itemMap = new Map<string, GroceryItem>();
 
     recipes.forEach((recipe) => {
-      recipe.ingredients.forEach((ing) => {
+      const ingredients = getAllIngredients(recipe);
+      ingredients.forEach((ing) => {
         const key = `${ing.name.toLowerCase()}-${ing.unit}`;
         const existing = itemMap.get(key);
 

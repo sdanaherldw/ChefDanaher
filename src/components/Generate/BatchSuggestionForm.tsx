@@ -25,26 +25,6 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
     );
   };
 
-  // Calculate dietary summary based on selected diners
-  const getDietarySummary = () => {
-    if (selectedDiners.length === 0) return '';
-
-    const hasShane = selectedDiners.includes('shane');
-    const hasLauren = selectedDiners.includes('lauren');
-    const hasBrady = selectedDiners.includes('brady');
-
-    if (hasShane) {
-      return 'Vegan recipes (for Shane)';
-    }
-    if (hasBrady) {
-      return 'Dairy-free & egg-free (for Brady)';
-    }
-    if (hasLauren) {
-      return 'Dairy-free (for Lauren)';
-    }
-    return 'No dietary restrictions';
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -70,7 +50,7 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
       <div className="batch-loading">
         <DinerSpinner />
         <p className="batch-loading-text">
-          Generating 10 {getDietarySummary().toLowerCase()} ideas...
+          Generating 10 recipe ideas...
         </p>
       </div>
     );
@@ -112,15 +92,13 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
             );
           })}
         </div>
-        {selectedDiners.length > 0 && (
-          <p className="dietary-summary">{getDietarySummary()}</p>
-        )}
       </div>
 
       <Button
         type="submit"
         disabled={selectedDiners.length === 0}
         style={{ width: '100%' }}
+        className="generate-btn"
       >
         Generate 10 Ideas
       </Button>

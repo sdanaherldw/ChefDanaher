@@ -79,14 +79,38 @@ export interface RecipeStep {
   parallel?: string[]; // IDs of steps that can run in parallel
 }
 
+// Protein option for variant recipes
+export interface ProteinOption {
+  id: string;                    // "vegan" or "meat"
+  name: string;                  // "Crispy Glazed Tofu"
+  suitableFor: string[];         // ["shane"] - member IDs
+  ingredients: Ingredient[];
+  steps: RecipeStep[];
+  dietaryInfo: {
+    isVegan: boolean;
+    isDairyFree: boolean;
+    isEggFree: boolean;
+  };
+}
+
 export interface Recipe {
   id: string;
   name: string;
   description: string;
   servings: number;
   totalTime: number; // in minutes
-  ingredients: Ingredient[];
-  steps: RecipeStep[];
+
+  // LEGACY (keep for backward compat with old recipes)
+  ingredients?: Ingredient[];
+  steps?: RecipeStep[];
+
+  // NEW: Shared components everyone eats
+  sharedIngredients?: Ingredient[];
+  sharedSteps?: RecipeStep[];
+
+  // NEW: Protein variants
+  proteinOptions?: ProteinOption[];
+
   tags: string[];
   dietaryInfo: {
     isVegan: boolean;
@@ -100,6 +124,53 @@ export interface Recipe {
   suitableFor?: string[]; // member IDs
   // Usage tracking: set when groceries are purchased for a day with this recipe
   lastUsedAt?: string; // ISO date string
+}
+
+// Helper: Check if recipe has protein variants
+export function hasProteinVariants(recipe: Recipe): boolean {
+  return Array.isArray(recipe.proteinOptions) && recipe.proteinOptions.length > 0;
+}
+
+// Helper: Get all ingredients for a recipe, given which diners are eating
+// For legacy recipes, returns recipe.ingredients
+// For variant recipes, returns sharedIngredients + all protein option ingredients
+export function getAllIngredients(recipe: Recipe, _dinerIds?: string[]): Ingredient[] {
+  if (!hasProteinVariants(recipe)) {
+    // Legacy recipe - return ingredients directly
+    return recipe.ingredients || [];
+  }
+
+  // Variant recipe - combine shared + all protein options
+  const allIngredients: Ingredient[] = [...(recipe.sharedIngredients || [])];
+
+  // Include ALL protein option ingredients (we need to buy for everyone)
+  for (const option of recipe.proteinOptions || []) {
+    allIngredients.push(...option.ingredients);
+  }
+
+  return allIngredients;
+}
+
+// Helper: Get all steps for a recipe
+export function getAllSteps(recipe: Recipe): RecipeStep[] {
+  if (!hasProteinVariants(recipe)) {
+    return recipe.steps || [];
+  }
+
+  // For variant recipes, shared steps come first, then protein steps
+  const allSteps: RecipeStep[] = [...(recipe.sharedSteps || [])];
+
+  // Add protein option steps (labeled)
+  for (const option of recipe.proteinOptions || []) {
+    for (const step of option.steps) {
+      allSteps.push({
+        ...step,
+        instruction: `[${option.name}] ${step.instruction}`
+      });
+    }
+  }
+
+  return allSteps;
 }
 
 // Calendar Types

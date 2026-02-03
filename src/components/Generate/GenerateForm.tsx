@@ -27,26 +27,6 @@ export function GenerateForm() {
     );
   };
 
-  // Calculate dietary summary based on selected diners
-  const getDietarySummary = () => {
-    if (selectedDiners.length === 0) return '';
-
-    const hasShane = selectedDiners.includes('shane');
-    const hasLauren = selectedDiners.includes('lauren');
-    const hasBrady = selectedDiners.includes('brady');
-
-    if (hasShane) {
-      return 'Vegan recipe (for Shane)';
-    }
-    if (hasBrady) {
-      return 'Dairy-free & egg-free (for Brady)';
-    }
-    if (hasLauren) {
-      return 'Dairy-free (for Lauren)';
-    }
-    return 'No dietary restrictions';
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -115,9 +95,6 @@ export function GenerateForm() {
               );
             })}
           </div>
-          {selectedDiners.length > 0 && (
-            <p className="dietary-summary">{getDietarySummary()}</p>
-          )}
         </div>
 
         <div className="form-group">
@@ -222,6 +199,7 @@ export function GenerateForm() {
           type="submit"
           disabled={isLoading || selectedDiners.length === 0}
           style={{ width: '100%' }}
+          className="generate-btn"
         >
           {isLoading
             ? 'Generating...'
@@ -237,7 +215,7 @@ export function GenerateForm() {
               marginTop: 'var(--space-sm)',
             }}
           >
-            Creating a {getDietarySummary().toLowerCase() || 'custom'} recipe...
+            Creating your recipe...
           </p>
         )}
       </form>
