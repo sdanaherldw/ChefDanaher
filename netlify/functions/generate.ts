@@ -402,30 +402,43 @@ export default async function handler(request: Request, context: Context) {
     while (attempts < maxAttempts) {
       attempts++;
 
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful recipe generator. Always respond with valid JSON only. Generate detailed, specific instructions.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      });
-
-      const content = response.choices[0]?.message?.content;
-
-      if (!content) {
-        lastError = 'No content in response';
-        continue;
-      }
-
       try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4-turbo',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful recipe generator. Always respond with valid JSON only, no markdown. Generate detailed, specific instructions.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+          max_tokens: 4000,
+        });
+
+        let content = response.choices[0]?.message?.content;
+
+        if (!content) {
+          lastError = 'No content in response';
+          continue;
+        }
+
+        // Strip markdown code blocks if present
+        content = content.trim();
+        if (content.startsWith('```json')) {
+          content = content.slice(7);
+        } else if (content.startsWith('```')) {
+          content = content.slice(3);
+        }
+        if (content.endsWith('```')) {
+          content = content.slice(0, -3);
+        }
+        content = content.trim();
+
         const parsed = JSON.parse(content);
         const validated = RecipeSchema.parse(parsed);
 
@@ -499,8 +512,13 @@ export default async function handler(request: Request, context: Context) {
       } catch (parseError) {
         if (parseError instanceof z.ZodError) {
           lastError = `Validation error: ${parseError.errors.map(e => e.message).join(', ')}`;
+        } else if (parseError instanceof SyntaxError) {
+          lastError = `JSON parse error: ${parseError.message}`;
+        } else if (parseError instanceof Error) {
+          lastError = `API error: ${parseError.message}`;
+          console.error('OpenAI API error:', parseError);
         } else {
-          lastError = 'Failed to parse response';
+          lastError = 'Unknown error occurred';
         }
       }
     }
