@@ -374,12 +374,23 @@ export default async function handler(request: Request, context: Context) {
     while (attempts < maxAttempts) {
       attempts++;
 
-      const response = await openai.responses.create({
-        model: 'gpt-5.2',
-        input: `You are a creative meal planning assistant. Always respond with valid JSON only. Generate diverse, appetizing recipes with detailed instructions.\n\n${prompt}`,
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a creative meal planning assistant. Always respond with valid JSON only. Generate diverse, appetizing recipes with detailed instructions.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.8,
+        max_tokens: 8000,
       });
 
-      const content = response.output_text;
+      const content = response.choices[0]?.message?.content;
 
       if (!content) {
         lastError = 'No content in response';
