@@ -354,6 +354,7 @@ export default async function handler(request: Request, context: Context) {
   try {
     const body: GenerateBatchRequest = await request.json();
     const { diners } = body;
+    console.log('[generate-batch] Request received, diners:', diners);
 
     if (!diners || diners.length === 0) {
       return createAuthResponse(400, { error: 'At least one diner required' });
@@ -364,6 +365,7 @@ export default async function handler(request: Request, context: Context) {
       return createAuthResponse(400, { error: 'No valid diners selected' });
     }
 
+    console.log('[generate-batch] Valid diners:', validDiners);
     const openai = new OpenAI({ apiKey });
     const { prompt, dietary } = buildPrompt(validDiners);
 
@@ -373,8 +375,10 @@ export default async function handler(request: Request, context: Context) {
 
     while (attempts < maxAttempts) {
       attempts++;
+      console.log(`[generate-batch] Attempt ${attempts}/${maxAttempts}`);
 
       try {
+        console.log('[generate-batch] Calling OpenAI API...');
         const response = await openai.chat.completions.create({
           model: 'gpt-4-turbo',
           messages: [
@@ -393,9 +397,11 @@ export default async function handler(request: Request, context: Context) {
         });
 
         let content = response.choices[0]?.message?.content;
+        console.log('[generate-batch] OpenAI response received, content length:', content?.length || 0);
 
         if (!content) {
           lastError = 'No content in response';
+          console.log('[generate-batch] No content in response');
           continue;
         }
 
@@ -412,11 +418,14 @@ export default async function handler(request: Request, context: Context) {
         content = content.trim();
 
         const parsed = JSON.parse(content);
+        console.log('[generate-batch] JSON parsed, validating schema...');
         const validated = BatchResponseSchema.parse(parsed);
+        console.log('[generate-batch] Schema validated, got', validated.recipes.length, 'recipes');
 
         // Validate we got 10 recipes
         if (validated.recipes.length !== 10) {
           lastError = `Expected 10 recipes, got ${validated.recipes.length}`;
+          console.log('[generate-batch]', lastError);
           continue;
         }
 
@@ -494,19 +503,24 @@ export default async function handler(request: Request, context: Context) {
           { status: 200, headers }
         );
       } catch (parseError) {
+        console.log('[generate-batch] Caught error:', parseError);
         if (parseError instanceof z.ZodError) {
-          lastError = `Validation error: ${parseError.errors.map(e => e.message).join(', ')}`;
+          lastError = `Validation error: ${parseError.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`;
+          console.log('[generate-batch] Zod validation error:', lastError);
         } else if (parseError instanceof SyntaxError) {
           lastError = `JSON parse error: ${parseError.message}`;
+          console.log('[generate-batch] JSON parse error:', lastError);
         } else if (parseError instanceof Error) {
           lastError = `API error: ${parseError.message}`;
-          console.error('OpenAI API error:', parseError);
+          console.error('[generate-batch] API error:', parseError.message, parseError.stack);
         } else {
           lastError = 'Unknown error occurred';
+          console.log('[generate-batch] Unknown error:', parseError);
         }
       }
     }
 
+    console.log('[generate-batch] All attempts failed, last error:', lastError);
     return createAuthResponse(500, {
       error: `Failed to generate recipes after ${maxAttempts} attempts: ${lastError}`,
     });
