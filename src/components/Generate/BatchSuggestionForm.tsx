@@ -50,7 +50,7 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
       <div className="batch-loading">
         <DinerSpinner />
         <p className="batch-loading-text">
-          Generating 10 recipe ideas...
+          Generating 5 recipe ideas...
         </p>
       </div>
     );
@@ -59,7 +59,7 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
   return (
     <form onSubmit={handleSubmit} className="batch-form">
       <p className="batch-form-intro">
-        Get 10 diverse recipe ideas at once. Review each one and choose which to keep.
+        Get 5 high-quality recipe ideas at once. Review each one and choose which to keep.
       </p>
 
       <div className="form-group">
@@ -100,7 +100,7 @@ export function BatchSuggestionForm({ onSuggestionsReady }: BatchSuggestionFormP
         style={{ width: '100%' }}
         className="generate-btn"
       >
-        Generate 10 Ideas
+        Generate 5 Ideas
       </Button>
     </form>
   );

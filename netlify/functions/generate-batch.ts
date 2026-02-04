@@ -173,7 +173,7 @@ function buildPrompt(diners: string[]): { prompt: string; dietary: ReturnType<ty
     const veganNames = dietary.veganDiners.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
     const meatNames = dietary.meatEaters.map(id => HOUSEHOLD[id as keyof typeof HOUSEHOLD]?.name).filter(Boolean);
 
-    prompt = `You are a creative meal planning assistant. Generate 10 DIVERSE dinner recipes with PROTEIN VARIANTS to accommodate both vegan and meat-eating diners.
+    prompt = `You are a creative meal planning assistant. Generate 5 DIVERSE dinner recipes with PROTEIN VARIANTS to accommodate both vegan and meat-eating diners.
 
 ${dietary.constraints}
 
@@ -239,7 +239,7 @@ RESPONSE FORMAT:
   ]
 }
 
-Generate exactly 10 recipes (batch-${timestamp}-1 through batch-${timestamp}-10).
+Generate exactly 5 recipes (batch-${timestamp}-1 through batch-${timestamp}-5).
 
 CRITICAL:
 - Each recipe has sharedIngredients/sharedSteps + proteinOptions (no top-level ingredients/steps)
@@ -261,7 +261,7 @@ CRITICAL:
       ? '- EGG-FREE'
       : '- No restrictions';
 
-    prompt = `You are a creative meal planning assistant. Generate 10 DIVERSE and INTERESTING dinner recipe ideas that meet ALL requirements below.
+    prompt = `You are a creative meal planning assistant. Generate 5 DIVERSE and INTERESTING dinner recipe ideas that meet ALL requirements below.
 
 ${dietary.constraints}
 
@@ -317,12 +317,12 @@ Return a JSON object with this exact structure:
   ]
 }
 
-Generate exactly 10 recipes with unique IDs (batch-${timestamp}-1 through batch-${timestamp}-10).
+Generate exactly 5 recipes with unique IDs (batch-${timestamp}-1 through batch-${timestamp}-5).
 
 CRITICAL REQUIREMENTS:
-- Exactly 10 recipes in the array
+- Exactly 5 recipes in the array
 - Each recipe uses a DIFFERENT main protein
-- At least 5 different cuisine styles across the 10 recipes
+- At least 4 different cuisine styles across the 5 recipes
 - All recipes are dinner-appropriate (not breakfast items)
 - All dietaryInfo fields must match the requirements above
 - totalTime must be <= 45 for each recipe
@@ -380,7 +380,7 @@ export default async function handler(request: Request, context: Context) {
       try {
         console.log('[generate-batch] Calling OpenAI API...');
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4-turbo',
           messages: [
             {
               role: 'system',
@@ -422,9 +422,9 @@ export default async function handler(request: Request, context: Context) {
         const validated = BatchResponseSchema.parse(parsed);
         console.log('[generate-batch] Schema validated, got', validated.recipes.length, 'recipes');
 
-        // Validate we got 10 recipes
-        if (validated.recipes.length !== 10) {
-          lastError = `Expected 10 recipes, got ${validated.recipes.length}`;
+        // Validate we got 5 recipes
+        if (validated.recipes.length !== 5) {
+          lastError = `Expected 5 recipes, got ${validated.recipes.length}`;
           console.log('[generate-batch]', lastError);
           continue;
         }
