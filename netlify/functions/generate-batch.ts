@@ -374,23 +374,12 @@ export default async function handler(request: Request, context: Context) {
     while (attempts < maxAttempts) {
       attempts++;
 
-      const completion = await openai.chat.completions.create({
+      const response = await openai.responses.create({
         model: 'gpt-5.2',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a creative meal planning assistant. Always respond with valid JSON only. Generate diverse, appetizing recipes with detailed instructions.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.9,
-        response_format: { type: 'json_object' },
+        input: `You are a creative meal planning assistant. Always respond with valid JSON only. Generate diverse, appetizing recipes with detailed instructions.\n\n${prompt}`,
       });
 
-      const content = completion.choices[0]?.message?.content;
+      const content = response.output_text;
 
       if (!content) {
         lastError = 'No content in response';
@@ -494,6 +483,7 @@ export default async function handler(request: Request, context: Context) {
     });
   } catch (error) {
     console.error('Generate batch error:', error);
-    return createAuthResponse(500, { error: 'Internal server error' });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return createAuthResponse(500, { error: `Generation failed: ${errorMessage}` });
   }
 }

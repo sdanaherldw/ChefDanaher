@@ -86,7 +86,8 @@ export function AutoPlanForm() {
       setPreview(response);
       addToast(`Generated ${numberOfDays}-day meal plan`, 'success');
     } catch (error) {
-      addToast('Failed to generate meal plan', 'error');
+      const message = error instanceof Error ? error.message : 'Failed to generate meal plan';
+      addToast(message, 'error');
     } finally {
       setIsLoading(false);
     }

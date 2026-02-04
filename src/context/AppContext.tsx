@@ -73,10 +73,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const id = Math.random().toString(36).slice(2);
     setToasts((prev) => [...prev, { id, message, type }]);
 
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
+    // Error toasts are persistent (must be manually dismissed)
+    // Other toasts auto-remove after 5 seconds
+    if (type !== 'error') {
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 5000);
+    }
   }, []);
 
   const removeToast = useCallback((id: string) => {

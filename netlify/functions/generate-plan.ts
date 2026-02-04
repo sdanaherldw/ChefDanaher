@@ -40,6 +40,70 @@ const StoreSectionSchema = z.enum([
   'bakery',
   'other',
 ]);
+type StoreSection = z.infer<typeof StoreSectionSchema>;
+const STORE_SECTIONS = new Set(StoreSectionSchema.options);
+
+function normalizeSection(value: unknown): StoreSection {
+  if (typeof value !== 'string') return 'other';
+  const raw = value.trim().toLowerCase();
+  if (STORE_SECTIONS.has(raw as StoreSection)) return raw as StoreSection;
+
+  if (raw.includes('spice') || raw.includes('canned') || raw.includes('grain') || raw.includes('pasta')) {
+    return 'pantry';
+  }
+  if (raw.includes('seafood') || raw.includes('fish')) {
+    return 'meat';
+  }
+  if (raw.includes('dairy')) {
+    return 'dairy-free';
+  }
+  if (raw.includes('produce') || raw.includes('veg') || raw.includes('vegetable')) {
+    return 'produce';
+  }
+  if (raw.includes('bakery') || raw.includes('bread')) {
+    return 'bakery';
+  }
+  if (raw.includes('frozen')) {
+    return 'frozen';
+  }
+
+  return 'other';
+}
+
+function normalizeIngredients(list: unknown): void {
+  if (!Array.isArray(list)) return;
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue;
+    const ingredient = item as { section?: unknown };
+    ingredient.section = normalizeSection(ingredient.section);
+  }
+}
+
+function normalizeRecipeSections(parsed: unknown): void {
+  if (!parsed || typeof parsed !== 'object') return;
+  const root = parsed as { recipes?: unknown };
+  if (!Array.isArray(root.recipes)) return;
+
+  for (const recipe of root.recipes) {
+    if (!recipe || typeof recipe !== 'object') continue;
+    const r = recipe as {
+      ingredients?: unknown;
+      sharedIngredients?: unknown;
+      proteinOptions?: unknown;
+    };
+
+    normalizeIngredients(r.ingredients);
+    normalizeIngredients(r.sharedIngredients);
+
+    if (Array.isArray(r.proteinOptions)) {
+      for (const option of r.proteinOptions) {
+        if (!option || typeof option !== 'object') continue;
+        const opt = option as { ingredients?: unknown };
+        normalizeIngredients(opt.ingredients);
+      }
+    }
+  }
+}
 
 const IngredientSchema = z.object({
   name: z.string(),
@@ -257,6 +321,7 @@ CRITICAL:
 - Each proteinOptions has vegan and meat options
 - Vegan option must have isVegan: true
 - Overall dietaryInfo.isVegan must be false
+- Ingredient.section must be ONE OF: produce, meat, pantry, dairy-free, frozen, bakery, other (no other categories)
 - Return ONLY JSON`;
 
   } else {
@@ -357,13 +422,48 @@ CRITICAL REQUIREMENTS:
 - At least 3 shared ingredients across the plan
 - All dietaryInfo fields must match the requirements above
 - totalTime must be <= 40 for each recipe
+- Ingredient.section must be ONE OF: produce, meat, pantry, dairy-free, frozen, bakery, other (no other categories)
 - Return ONLY the JSON object, no other text`;
   }
 
   return { prompt, dietary };
 }
 
-export default async function handler(request: Request, context: Context) {
+function formatError(error: unknown): string {
+  if (error instanceof Error) {
+    const name = error.name || 'Error';
+    const message = error.message || '';
+    const cause = (error as { cause?: unknown }).cause;
+    const causeMsg = cause ? ` | cause=${formatError(cause)}` : '';
+    return `${name}: ${message}${causeMsg}`.trim();
+  }
+  return String(error);
+}
+
+async function readJsonBody<T>(request: Request): Promise<{ ok: true; value: T } | { ok: false; error: string; bodySnippet?: string }> {
+  let text = '';
+  try {
+    text = await request.text();
+  } catch (err) {
+    return { ok: false, error: `BODY_READ_ERR: ${formatError(err)}` };
+  }
+  if (!text) {
+    return { ok: false, error: 'EMPTY_BODY' };
+  }
+  try {
+    return { ok: true, value: JSON.parse(text) as T };
+  } catch (err) {
+    return {
+      ok: false,
+      error: `BAD_JSON: ${formatError(err)}`,
+      bodySnippet: text.slice(0, 200),
+    };
+  }
+}
+
+async function handleRequest(request: Request, context: Context) {
+  // DEBUG: Disabled - function confirmed working
+
   if (request.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), {
       status: 405,
@@ -376,13 +476,23 @@ export default async function handler(request: Request, context: Context) {
     return unauthorizedResponse();
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKeyRaw = process.env.OPENAI_API_KEY ?? '';
+  const apiKey = apiKeyRaw.trim();
+  const apiKeyHasWhitespace = /\s/.test(apiKeyRaw);
+  const apiKeyHasQuotes = /["']/.test(apiKeyRaw);
   if (!apiKey) {
     return createAuthResponse(500, { error: 'OpenAI API key not configured' });
   }
 
   try {
-    const body: GeneratePlanRequest = await request.json();
+    const bodyResult = await readJsonBody<GeneratePlanRequest>(request);
+    if (!bodyResult.ok) {
+      return createAuthResponse(400, {
+        error: bodyResult.error,
+        ...(bodyResult.bodySnippet ? { bodySnippet: bodyResult.bodySnippet } : {}),
+      });
+    }
+    const body = bodyResult.value;
     const { diners, numberOfDays, targetDates } = body;
 
     if (!diners || diners.length === 0) {
@@ -402,7 +512,17 @@ export default async function handler(request: Request, context: Context) {
       return createAuthResponse(400, { error: 'No valid diners selected' });
     }
 
-    const openai = new OpenAI({ apiKey });
+    const keyPrefix = apiKey.substring(0, 15);
+    const keyMeta = `len=${apiKeyRaw.length}, trimmedLen=${apiKey.length}, ws=${apiKeyHasWhitespace}, quotes=${apiKeyHasQuotes}`;
+
+    // Create client with just API key - don't pass org/project at all
+    let openai;
+    try {
+      openai = new OpenAI({ apiKey });
+    } catch (sdkError) {
+      const msg = sdkError instanceof Error ? sdkError.message : String(sdkError);
+      return createAuthResponse(500, { error: `SDK_INIT: key=${keyPrefix}, ${keyMeta}, err=${msg}` });
+    }
     const { prompt, dietary } = buildPrompt({ ...body, diners: validDiners });
 
     let attempts = 0;
@@ -412,23 +532,37 @@ export default async function handler(request: Request, context: Context) {
     while (attempts < maxAttempts) {
       attempts++;
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-5.2',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a helpful meal planning assistant. Always respond with valid JSON only. Generate detailed, specific instructions for each recipe.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.8,
-        response_format: { type: 'json_object' },
-      });
+      let response;
+      try {
+        // Using Chat Completions API with gpt-4o for compatibility
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are a helpful meal planning assistant. Always respond with valid JSON only.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          response_format: { type: 'json_object' },
+        });
+        response = { output_text: completion.choices[0]?.message?.content };
+      } catch (apiError) {
+        const err = apiError as Record<string, unknown>;
+        const details = [
+          `key=${keyPrefix}`,
+          err.status ? `status=${err.status}` : null,
+          err.code ? `code=${err.code}` : null,
+          err.type ? `type=${err.type}` : null,
+          `msg=${String(err.message || apiError)}`,
+        ].filter(Boolean).join(', ');
+        return createAuthResponse(500, { error: `API_ERR: ${details} (${keyMeta})` });
+      }
 
-      const content = completion.choices[0]?.message?.content;
+      const content = response.output_text;
 
       if (!content) {
         lastError = 'No content in response';
@@ -437,7 +571,18 @@ export default async function handler(request: Request, context: Context) {
 
       try {
         const parsed = JSON.parse(content);
-        const validated = MealPlanResponseSchema.parse(parsed);
+        normalizeRecipeSections(parsed);
+        const validationResult = MealPlanResponseSchema.safeParse(parsed);
+
+        if (!validationResult.success) {
+          const errors = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+          lastError = `Schema validation failed: ${errors}`;
+          console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
+          console.error('Raw response:', content.substring(0, 500));
+          continue;
+        }
+
+        const validated = validationResult.data;
 
         // Validate we got the right number of recipes
         if (validated.recipes.length !== numberOfDays) {
@@ -541,6 +686,24 @@ export default async function handler(request: Request, context: Context) {
     });
   } catch (error) {
     console.error('Generate plan error:', error);
-    return createAuthResponse(500, { error: 'Internal server error' });
+    // Return full error details for debugging
+    const apiKeyPrefix = apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET';
+    let errorDetails = error instanceof Error ? error.message : String(error);
+    if (error && typeof error === 'object') {
+      const err = error as Record<string, unknown>;
+      if (err.status) errorDetails += ` [status: ${err.status}]`;
+      if (err.code) errorDetails += ` [code: ${err.code}]`;
+      if (err.type) errorDetails += ` [type: ${err.type}]`;
+    }
+    return createAuthResponse(500, { error: `Generation failed (key: ${apiKeyPrefix}): ${errorDetails}` });
+  }
+}
+
+export default async function handler(request: Request, context: Context) {
+  try {
+    return await handleRequest(request, context);
+  } catch (error) {
+    console.error('Generate plan unhandled error:', error);
+    return createAuthResponse(500, { error: `UNHANDLED: ${formatError(error)}` });
   }
 }

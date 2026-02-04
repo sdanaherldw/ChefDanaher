@@ -11,19 +11,20 @@ interface HeaderProps {
   showFullMenu?: boolean;
 }
 
-// About panel easter egg content
+// About panel content
 function AboutPanel({ onClose }: { onClose: () => void }) {
   return (
     <motion.div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
+        background: 'rgba(0, 0, 0, 0.85)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 2000,
         padding: 'var(--space-lg)',
+        overflowY: 'auto',
       }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -35,32 +36,111 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
           background: 'var(--color-cream)',
           borderRadius: 'var(--radius-lg)',
           padding: 'var(--space-xl)',
-          maxWidth: '400px',
+          maxWidth: '540px',
           textAlign: 'center',
+          margin: 'auto',
         }}
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-red)', marginBottom: 'var(--space-md)' }}>
-          The Story
+        <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--color-red)', marginBottom: 'var(--space-lg)', fontSize: '1.75rem' }}>
+          The Story of Birdie & Ripsaw
         </h2>
-        <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
-          <strong>Birdie</strong> is the heart of this kitchen. No fuss, no frills—just
-          good food, made with care, landing in front of you before you knew you were
-          hungry. You're gonna eat well. You're gonna love it. And somewhere between
-          the first bite and the last, you're gonna feel loved too.
+
+        {/* They Meet */}
+        <motion.div
+          style={{ marginBottom: 'var(--space-lg)' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <img
+            src="/story-meet.jpg"
+            alt="Birdie and Ripsaw when they first met"
+            style={{
+              width: '100%',
+              maxWidth: '280px',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 'var(--space-sm)',
+              border: '3px solid var(--color-cream-dark)',
+              boxShadow: 'var(--shadow-md)',
+            }}
+          />
+          <p style={{ fontStyle: 'italic', color: 'var(--color-gray)', fontSize: '0.8125rem', marginBottom: 'var(--space-xs)' }}>
+            Somewhere in the Atlantic, 2004
+          </p>
+          <p style={{ lineHeight: 1.6, fontSize: '0.9375rem' }}>
+            They met on a cruise to Bermuda. Ripsaw was stretched out on a lounger
+            on the Sun Deck when Birdie walked up and asked, "Mind if I take the
+            chair next to you?" The answer was no. It's been no ever since.
+          </p>
+        </motion.div>
+
+        {/* They Marry */}
+        <motion.div
+          style={{ marginBottom: 'var(--space-lg)' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <img
+            src="/story-marry.jpg"
+            alt="Birdie and Ripsaw's wedding in Bermuda"
+            style={{
+              width: '100%',
+              maxWidth: '320px',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 'var(--space-sm)',
+              border: '3px solid var(--color-cream-dark)',
+              boxShadow: 'var(--shadow-md)',
+            }}
+          />
+          <p style={{ fontStyle: 'italic', color: 'var(--color-gray)', fontSize: '0.8125rem', marginBottom: 'var(--space-xs)' }}>
+            Bermuda, a few years later
+          </p>
+          <p style={{ lineHeight: 1.6, fontSize: '0.9375rem' }}>
+            They went back to the island where it all started. Said their vows with
+            sand between their toes and saltwater in the air. The cake was simple.
+            The promise wasn't.
+          </p>
+        </motion.div>
+
+        {/* The Diner */}
+        <motion.div
+          style={{ marginBottom: 'var(--space-lg)' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <img
+            src="/story-diner.jpg"
+            alt="Birdie and Ripsaw at their diner"
+            style={{
+              width: '100%',
+              maxWidth: '380px',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: 'var(--space-sm)',
+              border: '3px solid var(--color-cream-dark)',
+              boxShadow: 'var(--shadow-md)',
+            }}
+          />
+          <p style={{ fontStyle: 'italic', color: 'var(--color-gray)', fontSize: '0.8125rem', marginBottom: 'var(--space-xs)' }}>
+            The diner, present day
+          </p>
+          <p style={{ lineHeight: 1.6, fontSize: '0.9375rem' }}>
+            Now here they are. <strong>Birdie</strong> runs the front—warm smile,
+            sharp memory, knows your order before you do. <strong>Ripsaw</strong> runs
+            the back—unpredictable, fearless, sliding plates through the pass with a
+            wink and a "trust me." Together, they've been feeding families for years.
+          </p>
+        </motion.div>
+
+        <p style={{ color: 'var(--color-gray)', fontSize: '0.875rem', marginBottom: 'var(--space-lg)', fontStyle: 'italic' }}>
+          Some things you find on a boat to Bermuda just stick with you forever.
         </p>
-        <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.6 }}>
-          <strong>Ripsaw</strong> is... unpredictable. You never quite know what's
-          coming out of that kitchen. Could be genius. Could be chaos. Either way,
-          you're eating it. "Just try it," comes the voice from the pass, sliding
-          a plate your way. "It's all you got."
-        </p>
-        <p style={{ color: 'var(--color-gray)', fontSize: '0.875rem', marginBottom: 'var(--space-lg)' }}>
-          Together, they make sure your family eats well every night.
-        </p>
+
         <Button onClick={onClose}>Back to the Diner</Button>
       </motion.div>
     </motion.div>

@@ -44,11 +44,29 @@ async function fetchWithAuth<T>(
     throw new ApiError('Unauthorized', 401);
   }
 
-  const data = await response.json();
+  let rawText = '';
+  try {
+    rawText = await response.text();
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new ApiError(`Failed to read response body: ${message}`, response.status);
+  }
+
+  let data: unknown = null;
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new ApiError(`Invalid JSON response: ${message}`, response.status, {
+        raw: rawText.slice(0, 500),
+      });
+    }
+  }
 
   if (!response.ok) {
     throw new ApiError(
-      data.error || 'Request failed',
+      (data as { error?: string } | null)?.error || rawText || 'Request failed',
       response.status,
       data
     );

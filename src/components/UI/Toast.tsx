@@ -47,12 +47,15 @@ function ToastItem({ toast, onUndo }: ToastItemProps) {
       >
         ✕
       </button>
-      <motion.div
-        className="toast-progress"
-        initial={{ width: '100%' }}
-        animate={{ width: '0%' }}
-        transition={{ duration: duration / 1000, ease: 'linear' }}
-      />
+      {/* Hide progress bar for error toasts (they're persistent) */}
+      {toast.type !== 'error' && (
+        <motion.div
+          className="toast-progress"
+          initial={{ width: '100%' }}
+          animate={{ width: '0%' }}
+          transition={{ duration: duration / 1000, ease: 'linear' }}
+        />
+      )}
     </motion.div>
   );
 }
