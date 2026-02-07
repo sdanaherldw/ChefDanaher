@@ -5,6 +5,10 @@
 
 [functions]
   node_bundler = "esbuild"
+  timeout = 26
+
+[build.environment]
+  NODE_ENV = "production"
 
 [[redirects]]
   from = "/api/*"

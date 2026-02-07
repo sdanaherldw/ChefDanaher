@@ -6,6 +6,16 @@ import {
   createAuthResponse,
   unauthorizedResponse,
 } from './utils/auth';
+import {
+  OPENAI_CONFIG,
+  validateApiKey,
+  getRetryDelay,
+  isRateLimitError,
+  isRetryableError,
+  sleep,
+  getModel,
+  getFallbackModel,
+} from './config';
 
 // Household members with dietary restrictions
 const HOUSEHOLD = {
@@ -346,10 +356,11 @@ export default async function handler(request: Request, context: Context) {
     return unauthorizedResponse();
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return createAuthResponse(500, { error: 'OpenAI API key not configured' });
+  const keyValidation = validateApiKey(process.env.OPENAI_API_KEY);
+  if (!keyValidation.valid) {
+    return createAuthResponse(500, { error: keyValidation.error });
   }
+  const apiKey = keyValidation.trimmed;
 
   try {
     const body: GenerateBatchRequest = await request.json();
@@ -370,17 +381,18 @@ export default async function handler(request: Request, context: Context) {
     const { prompt, dietary } = buildPrompt(validDiners);
 
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = OPENAI_CONFIG.retry.maxAttempts;
     let lastError = '';
+    let currentModel = getModel();
 
     while (attempts < maxAttempts) {
       attempts++;
-      console.log(`[generate-batch] Attempt ${attempts}/${maxAttempts}`);
+      console.log(`[generate-batch] Attempt ${attempts}/${maxAttempts} with model ${currentModel}`);
 
       try {
         console.log('[generate-batch] Calling OpenAI API...');
         const response = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: currentModel,
           messages: [
             {
               role: 'system',
@@ -392,8 +404,8 @@ export default async function handler(request: Request, context: Context) {
             }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.8,
-          max_tokens: 12000,
+          temperature: OPENAI_CONFIG.temperature.batchRecipe,
+          max_tokens: OPENAI_CONFIG.maxTokens.batchRecipe,
         });
 
         let content = response.choices[0]?.message?.content;
@@ -513,6 +525,20 @@ export default async function handler(request: Request, context: Context) {
         } else if (parseError instanceof Error) {
           lastError = `API error: ${parseError.message}`;
           console.error('[generate-batch] API error:', parseError.message, parseError.stack);
+
+          // Handle retryable errors with exponential backoff
+          if (isRetryableError(parseError)) {
+            const isRateLimit = isRateLimitError(parseError);
+            const delayMs = getRetryDelay(attempts, isRateLimit);
+            console.log(`[generate-batch] Retryable error, waiting ${Math.round(delayMs)}ms before retry...`);
+            await sleep(delayMs);
+
+            // On last attempt with primary model, try fallback
+            if (attempts === maxAttempts - 1 && currentModel === getModel()) {
+              currentModel = getFallbackModel();
+              console.log(`[generate-batch] Switching to fallback model: ${currentModel}`);
+            }
+          }
         } else {
           lastError = 'Unknown error occurred';
           console.log('[generate-batch] Unknown error:', parseError);

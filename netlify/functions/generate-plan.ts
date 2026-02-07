@@ -6,6 +6,16 @@ import {
   createAuthResponse,
   unauthorizedResponse,
 } from './utils/auth';
+import {
+  OPENAI_CONFIG,
+  validateApiKey,
+  getRetryDelay,
+  isRateLimitError,
+  isRetryableError,
+  sleep,
+  getModel,
+  getFallbackModel,
+} from './config';
 
 // Household members with dietary restrictions
 const HOUSEHOLD = {
@@ -476,13 +486,11 @@ async function handleRequest(request: Request, context: Context) {
     return unauthorizedResponse();
   }
 
-  const apiKeyRaw = process.env.OPENAI_API_KEY ?? '';
-  const apiKey = apiKeyRaw.trim();
-  const apiKeyHasWhitespace = /\s/.test(apiKeyRaw);
-  const apiKeyHasQuotes = /["']/.test(apiKeyRaw);
-  if (!apiKey) {
-    return createAuthResponse(500, { error: 'OpenAI API key not configured' });
+  const keyValidation = validateApiKey(process.env.OPENAI_API_KEY);
+  if (!keyValidation.valid) {
+    return createAuthResponse(500, { error: keyValidation.error });
   }
+  const apiKey = keyValidation.trimmed;
 
   try {
     const bodyResult = await readJsonBody<GeneratePlanRequest>(request);
@@ -512,31 +520,22 @@ async function handleRequest(request: Request, context: Context) {
       return createAuthResponse(400, { error: 'No valid diners selected' });
     }
 
-    const keyPrefix = apiKey.substring(0, 15);
-    const keyMeta = `len=${apiKeyRaw.length}, trimmedLen=${apiKey.length}, ws=${apiKeyHasWhitespace}, quotes=${apiKeyHasQuotes}`;
-
-    // Create client with just API key - don't pass org/project at all
-    let openai;
-    try {
-      openai = new OpenAI({ apiKey });
-    } catch (sdkError) {
-      const msg = sdkError instanceof Error ? sdkError.message : String(sdkError);
-      return createAuthResponse(500, { error: `SDK_INIT: key=${keyPrefix}, ${keyMeta}, err=${msg}` });
-    }
+    const openai = new OpenAI({ apiKey });
     const { prompt, dietary } = buildPrompt({ ...body, diners: validDiners });
 
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = OPENAI_CONFIG.retry.maxAttempts;
     let lastError = '';
+    let currentModel = getModel();
 
     while (attempts < maxAttempts) {
       attempts++;
+      console.log(`[generate-plan] Attempt ${attempts}/${maxAttempts} with model ${currentModel}`);
 
       let response;
       try {
-        // Using Chat Completions API with gpt-4o for compatibility
         const completion = await openai.chat.completions.create({
-          model: 'gpt-4o',
+          model: currentModel,
           messages: [
             {
               role: 'system',
@@ -548,18 +547,38 @@ async function handleRequest(request: Request, context: Context) {
             },
           ],
           response_format: { type: 'json_object' },
+          temperature: OPENAI_CONFIG.temperature.mealPlan,
+          max_tokens: OPENAI_CONFIG.maxTokens.mealPlan,
         });
         response = { output_text: completion.choices[0]?.message?.content };
       } catch (apiError) {
+        console.error('[generate-plan] API error:', apiError);
+
+        // Handle retryable errors with exponential backoff
+        if (isRetryableError(apiError)) {
+          const isRateLimit = isRateLimitError(apiError);
+          const delayMs = getRetryDelay(attempts, isRateLimit);
+          console.log(`[generate-plan] Retryable error, waiting ${Math.round(delayMs)}ms before retry...`);
+          await sleep(delayMs);
+
+          // On last attempt with primary model, try fallback
+          if (attempts === maxAttempts - 1 && currentModel === getModel()) {
+            currentModel = getFallbackModel();
+            console.log(`[generate-plan] Switching to fallback model: ${currentModel}`);
+          }
+          lastError = `API error: ${apiError instanceof Error ? apiError.message : String(apiError)}`;
+          continue;
+        }
+
+        // Non-retryable error - fail immediately
         const err = apiError as Record<string, unknown>;
         const details = [
-          `key=${keyPrefix}`,
           err.status ? `status=${err.status}` : null,
           err.code ? `code=${err.code}` : null,
           err.type ? `type=${err.type}` : null,
           `msg=${String(err.message || apiError)}`,
         ].filter(Boolean).join(', ');
-        return createAuthResponse(500, { error: `API_ERR: ${details} (${keyMeta})` });
+        return createAuthResponse(500, { error: `API_ERR: ${details}` });
       }
 
       const content = response.output_text;
@@ -686,8 +705,6 @@ async function handleRequest(request: Request, context: Context) {
     });
   } catch (error) {
     console.error('Generate plan error:', error);
-    // Return full error details for debugging
-    const apiKeyPrefix = apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT SET';
     let errorDetails = error instanceof Error ? error.message : String(error);
     if (error && typeof error === 'object') {
       const err = error as Record<string, unknown>;
@@ -695,7 +712,7 @@ async function handleRequest(request: Request, context: Context) {
       if (err.code) errorDetails += ` [code: ${err.code}]`;
       if (err.type) errorDetails += ` [type: ${err.type}]`;
     }
-    return createAuthResponse(500, { error: `Generation failed (key: ${apiKeyPrefix}): ${errorDetails}` });
+    return createAuthResponse(500, { error: `Generation failed: ${errorDetails}` });
   }
 }
 

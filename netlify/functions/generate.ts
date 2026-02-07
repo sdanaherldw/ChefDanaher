@@ -6,6 +6,16 @@ import {
   createAuthResponse,
   unauthorizedResponse,
 } from './utils/auth';
+import {
+  OPENAI_CONFIG,
+  validateApiKey,
+  getRetryDelay,
+  isRateLimitError,
+  isRetryableError,
+  sleep,
+  getModel,
+  getFallbackModel,
+} from './config';
 
 // Household members with dietary restrictions
 const HOUSEHOLD = {
@@ -373,10 +383,11 @@ export default async function handler(request: Request, context: Context) {
     return unauthorizedResponse();
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return createAuthResponse(500, { error: 'OpenAI API key not configured' });
+  const keyValidation = validateApiKey(process.env.OPENAI_API_KEY);
+  if (!keyValidation.valid) {
+    return createAuthResponse(500, { error: keyValidation.error });
   }
+  const apiKey = keyValidation.trimmed;
 
   try {
     const body: GenerateRequest = await request.json();
@@ -396,15 +407,17 @@ export default async function handler(request: Request, context: Context) {
     const { prompt, dietary } = buildPrompt({ ...body, diners: validDiners });
 
     let attempts = 0;
-    const maxAttempts = 3;
+    const maxAttempts = OPENAI_CONFIG.retry.maxAttempts;
     let lastError: string = '';
+    let currentModel = getModel();
 
     while (attempts < maxAttempts) {
       attempts++;
 
       try {
+        console.log(`[generate] Attempt ${attempts}/${maxAttempts} with model ${currentModel}`);
         const response = await openai.chat.completions.create({
-          model: 'gpt-4-turbo',
+          model: currentModel,
           messages: [
             {
               role: 'system',
@@ -416,8 +429,8 @@ export default async function handler(request: Request, context: Context) {
             }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.7,
-          max_tokens: 4000,
+          temperature: OPENAI_CONFIG.temperature.singleRecipe,
+          max_tokens: OPENAI_CONFIG.maxTokens.singleRecipe,
         });
 
         let content = response.choices[0]?.message?.content;
@@ -517,6 +530,20 @@ export default async function handler(request: Request, context: Context) {
         } else if (parseError instanceof Error) {
           lastError = `API error: ${parseError.message}`;
           console.error('OpenAI API error:', parseError);
+
+          // Handle retryable errors with exponential backoff
+          if (isRetryableError(parseError)) {
+            const isRateLimit = isRateLimitError(parseError);
+            const delayMs = getRetryDelay(attempts, isRateLimit);
+            console.log(`[generate] Retryable error, waiting ${Math.round(delayMs)}ms before retry...`);
+            await sleep(delayMs);
+
+            // On last attempt with primary model, try fallback
+            if (attempts === maxAttempts - 1 && currentModel === getModel()) {
+              currentModel = getFallbackModel();
+              console.log(`[generate] Switching to fallback model: ${currentModel}`);
+            }
+          }
         } else {
           lastError = 'Unknown error occurred';
         }
