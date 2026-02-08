@@ -3846,6 +3846,32 @@ h4 { font-size: 1.25rem; }
     0 0 30px rgba(0, 255, 204, 0.6);
 }
 
+/* Diner checkboxes (WHO'S EATING cards) */
+[data-theme="rave"] .diner-checkbox {
+  background: rgba(25, 25, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="rave"] .diner-checkbox:hover {
+  border-color: var(--color-red);
+  background: rgba(255, 45, 106, 0.15);
+}
+
+[data-theme="rave"] .diner-checkbox.selected {
+  background: linear-gradient(135deg, #cc0066 0%, #990052 100%);
+  border-color: #ff2d6a;
+  box-shadow: 0 0 15px rgba(255, 45, 106, 0.4);
+}
+
+[data-theme="rave"] .diner-checkbox.selected .diner-name {
+  color: #ffffff;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="rave"] .diner-checkbox.selected .diner-restriction {
+  color: rgba(255, 255, 255, 0.85);
+}
+
 /* Ambient pulse animation for background */
 [data-theme="rave"] body::before {
   content: '';
@@ -3867,66 +3893,19 @@ h4 { font-size: 1.25rem; }
    RAVE MODE TRANSITIONS
    ======================================== */
 
-/* Transition ON: Lights Out, Rave Begins */
+/* Smooth transition for all theme changes */
+html {
+  transition: filter 300ms ease-out;
+}
+
+/* Transition ON: Quick fade to dark */
 .rave-transition-on {
-  animation: rave-blackout 400ms var(--ease-smooth) forwards;
+  filter: brightness(0.3);
 }
 
-.rave-transition-on * {
-  transition-duration: 0ms !important;
-}
-
-@keyframes rave-blackout {
-  0% {
-    filter: brightness(1) saturate(1);
-  }
-  15% {
-    filter: brightness(1.5) saturate(0.5);
-  }
-  30% {
-    filter: brightness(0.1) saturate(0);
-  }
-  100% {
-    filter: brightness(1) saturate(1);
-  }
-}
-
-/* After blackout, neon elements flicker on */
-[data-theme="rave"] .logo,
-[data-theme="rave"] .btn-primary,
-[data-theme="rave"] .neon-sign-toggle {
-  animation: neon-flicker-on 600ms ease-out 400ms both;
-}
-
-@keyframes neon-flicker-on {
-  0% { opacity: 0; }
-  10% { opacity: 0.8; }
-  20% { opacity: 0.2; }
-  30% { opacity: 0.9; }
-  40% { opacity: 0.4; }
-  50% { opacity: 1; }
-  60% { opacity: 0.7; }
-  100% { opacity: 1; }
-}
-
-/* Transition OFF: Morning Light Returns */
+/* Transition OFF: Quick fade to light */
 .rave-transition-off {
-  animation: morning-warmup 800ms var(--ease-smooth) forwards;
-}
-
-@keyframes morning-warmup {
-  0% {
-    filter: brightness(0.8) saturate(1.2) sepia(0);
-  }
-  30% {
-    filter: brightness(0.6) saturate(0.5) sepia(0.3);
-  }
-  60% {
-    filter: brightness(1.1) saturate(0.8) sepia(0.2);
-  }
-  100% {
-    filter: brightness(1) saturate(1) sepia(0);
-  }
+  filter: brightness(1.3) saturate(0.8);
 }
 
 /* ========================================
@@ -3940,9 +3919,13 @@ h4 { font-size: 1.25rem; }
     animation: none;
   }
 
+  html {
+    transition: none;
+  }
+
   .rave-transition-on,
   .rave-transition-off {
-    animation: none;
+    filter: none;
   }
 
   [data-theme="rave"] .neon-sign-toggle.rave-active .neon-dot {

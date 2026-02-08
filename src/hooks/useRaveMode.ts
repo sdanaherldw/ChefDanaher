@@ -43,33 +43,29 @@ export function useRaveMode() {
     setIsTransitioning(true);
 
     if (!isRaveMode) {
-      // Turning ON: "Lights Out, Rave Begins"
+      // Turning ON: Quick dim then switch
       document.documentElement.classList.add('rave-transition-on');
 
-      // Brief pause then apply theme
       setTimeout(() => {
         setIsRaveMode(true);
-      }, 200);
-
-      // Remove transition class after animation
-      setTimeout(() => {
         document.documentElement.classList.remove('rave-transition-on');
-        setIsTransitioning(false);
-      }, 1200);
-    } else {
-      // Turning OFF: "Morning Light Returns"
-      document.documentElement.classList.add('rave-transition-off');
-
-      // Apply normal theme after brief animation
-      setTimeout(() => {
-        setIsRaveMode(false);
       }, 150);
 
-      // Remove transition class after animation
       setTimeout(() => {
-        document.documentElement.classList.remove('rave-transition-off');
         setIsTransitioning(false);
-      }, 1000);
+      }, 400);
+    } else {
+      // Turning OFF: Quick brighten then switch
+      document.documentElement.classList.add('rave-transition-off');
+
+      setTimeout(() => {
+        setIsRaveMode(false);
+        document.documentElement.classList.remove('rave-transition-off');
+      }, 150);
+
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 400);
     }
   }, [isRaveMode]);
 
