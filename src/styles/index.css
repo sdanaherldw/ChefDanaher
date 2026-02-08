@@ -3265,3 +3265,687 @@ h4 { font-size: 1.25rem; }
     display: none;
   }
 }
+
+/* ========================================
+   NEON SIGN TOGGLE BUTTON
+   ======================================== */
+
+.neon-sign-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  border: 2px solid var(--color-cream);
+  border-radius: var(--radius-xl);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.neon-sign-toggle .neon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-cream);
+  box-shadow: 0 0 6px var(--color-cream), 0 0 12px rgba(254, 245, 231, 0.5);
+  transition: all var(--transition-normal);
+}
+
+.neon-sign-toggle .neon-text {
+  color: var(--color-cream);
+  text-shadow: 0 0 8px rgba(254, 245, 231, 0.5);
+  transition: all var(--transition-normal);
+}
+
+.neon-sign-toggle:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.15);
+}
+
+.neon-sign-toggle:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Rave Active State */
+.neon-sign-toggle.rave-active {
+  border-color: #ff2d6a;
+  background: rgba(255, 45, 106, 0.15);
+}
+
+.neon-sign-toggle.rave-active .neon-dot {
+  background-color: #ff2d6a;
+  box-shadow: 0 0 6px #ff2d6a, 0 0 12px rgba(255, 45, 106, 0.7);
+  animation: neon-pulse-dot 2s ease-in-out infinite;
+}
+
+.neon-sign-toggle.rave-active .neon-text {
+  color: #ff2d6a;
+  text-shadow: 0 0 8px rgba(255, 45, 106, 0.7), 0 0 16px rgba(255, 45, 106, 0.4);
+}
+
+.neon-sign-toggle.rave-active:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(255, 45, 106, 0.4);
+}
+
+@keyframes neon-pulse-dot {
+  0%, 100% {
+    box-shadow: 0 0 6px #ff2d6a, 0 0 12px rgba(255, 45, 106, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 10px #ff2d6a, 0 0 20px rgba(255, 45, 106, 0.9), 0 0 30px rgba(255, 45, 106, 0.5);
+  }
+}
+
+/* ========================================
+   RAVE MODE THEME
+   "After Hours at the Diner"
+   ======================================== */
+
+[data-theme="rave"] {
+  /* Core colors - dark mode with neon accents */
+  --color-cream: #0a0a0f;
+  --color-cream-dark: #12121a;
+  --color-red: #ff2d6a;
+  --color-red-dark: #cc2255;
+  --color-teal: #00ffcc;
+  --color-teal-dark: #00ccaa;
+  --color-charcoal: #e0e0ff;
+  --color-gray: #8888aa;
+  --color-gray-light: #252535;
+  --color-mustard: #ffff00;
+  --color-mint: #00ff88;
+  --color-coral: #ff6b35;
+
+  /* Additional rave colors */
+  --color-purple: #bf00ff;
+  --color-blue: #00aaff;
+
+  /* Semantic colors */
+  --color-success: var(--color-teal);
+  --color-error: var(--color-red);
+  --color-warning: var(--color-mustard);
+  --color-info: var(--color-blue);
+
+  /* Neon glow shadows */
+  --shadow-teal-glow:
+    0 0 5px rgba(0, 255, 204, 0.4),
+    0 0 15px rgba(0, 255, 204, 0.3),
+    0 0 30px rgba(0, 255, 204, 0.2);
+
+  --shadow-red-glow:
+    0 0 5px rgba(255, 45, 106, 0.5),
+    0 0 15px rgba(255, 45, 106, 0.4),
+    0 0 30px rgba(255, 45, 106, 0.2);
+
+  --shadow-mustard-glow:
+    0 0 5px rgba(255, 255, 0, 0.4),
+    0 0 15px rgba(255, 255, 0, 0.3),
+    0 0 30px rgba(255, 255, 0, 0.2);
+
+  --shadow-purple-glow:
+    0 0 5px rgba(191, 0, 255, 0.5),
+    0 0 15px rgba(191, 0, 255, 0.4),
+    0 0 30px rgba(191, 0, 255, 0.2);
+
+  /* Enhanced focus rings */
+  --focus-ring: 0 0 0 2px var(--color-cream), 0 0 0 4px var(--color-teal), 0 0 12px rgba(0, 255, 204, 0.4);
+  --focus-ring-red: 0 0 0 2px var(--color-cream), 0 0 0 4px var(--color-red), 0 0 12px rgba(255, 45, 106, 0.4);
+
+  /* Dark shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.3), 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.4), 0 16px 32px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.4), 0 16px 32px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+/* Body background */
+[data-theme="rave"] body {
+  background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, #0a0a0f 60%);
+  background-attachment: fixed;
+}
+
+/* Header with rainbow gradient bottom border */
+[data-theme="rave"] .header {
+  background: linear-gradient(135deg, #1a0a20 0%, #0f0f1a 50%, #0a1520 100%);
+  border-bottom: 2px solid;
+  border-image: linear-gradient(90deg, #ff2d6a, #bf00ff, #00aaff, #00ffcc, #00ff88, #ffff00, #ff6b35) 1;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(191, 0, 255, 0.1);
+}
+
+/* Logo with neon cyan glow and flicker */
+[data-theme="rave"] .header .logo {
+  color: #00ffcc;
+  text-shadow:
+    0 0 5px #00ffcc,
+    0 0 15px rgba(0, 255, 204, 0.7),
+    0 0 30px rgba(0, 255, 204, 0.4);
+  animation: logo-flicker 8s ease-in-out infinite;
+}
+
+@keyframes logo-flicker {
+  0%, 100% {
+    text-shadow:
+      0 0 5px #00ffcc,
+      0 0 15px rgba(0, 255, 204, 0.7),
+      0 0 30px rgba(0, 255, 204, 0.4);
+  }
+  5% {
+    text-shadow:
+      0 0 3px #00ffcc,
+      0 0 8px rgba(0, 255, 204, 0.5);
+  }
+  10% {
+    text-shadow:
+      0 0 5px #00ffcc,
+      0 0 15px rgba(0, 255, 204, 0.7),
+      0 0 30px rgba(0, 255, 204, 0.4);
+  }
+  50% {
+    text-shadow:
+      0 0 8px #00ffcc,
+      0 0 20px rgba(0, 255, 204, 0.8),
+      0 0 40px rgba(0, 255, 204, 0.5);
+  }
+  52% {
+    text-shadow:
+      0 0 2px #00ffcc,
+      0 0 6px rgba(0, 255, 204, 0.4);
+  }
+  54% {
+    text-shadow:
+      0 0 8px #00ffcc,
+      0 0 20px rgba(0, 255, 204, 0.8),
+      0 0 40px rgba(0, 255, 204, 0.5);
+  }
+}
+
+/* Cards - dark glass with neon left borders */
+[data-theme="rave"] .card,
+[data-theme="rave"] .recipe-card,
+[data-theme="rave"] .recipe-card-enhanced,
+[data-theme="rave"] .day-card,
+[data-theme="rave"] .collapsible-card,
+[data-theme="rave"] .sidebar-section,
+[data-theme="rave"] .grocery-list-section {
+  background: linear-gradient(135deg, rgba(25, 25, 40, 0.95) 0%, rgba(15, 15, 25, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="rave"] .recipe-card,
+[data-theme="rave"] .recipe-card-enhanced {
+  border-left: 4px solid var(--color-teal);
+  transition: all 200ms var(--ease-spring);
+}
+
+[data-theme="rave"] .recipe-card:hover,
+[data-theme="rave"] .recipe-card-enhanced:hover {
+  border-left-color: var(--color-red);
+  box-shadow: var(--shadow-lg), var(--shadow-teal-glow);
+}
+
+/* Recipe card cursor spotlight in rave mode */
+[data-theme="rave"] .recipe-card::before,
+[data-theme="rave"] .recipe-card-enhanced::before {
+  background: radial-gradient(circle, rgba(0, 255, 204, 0.12) 0%, transparent 70%);
+}
+
+/* Primary buttons - neon glow */
+[data-theme="rave"] .btn-primary {
+  background: linear-gradient(135deg, var(--color-teal) 0%, #00ccaa 100%);
+  color: #0a0a0f;
+  font-weight: 700;
+  box-shadow: var(--shadow-teal-glow);
+  animation: neon-breathe 4s ease-in-out infinite;
+}
+
+[data-theme="rave"] .btn-primary:hover:not(:disabled) {
+  box-shadow:
+    0 0 10px rgba(0, 255, 204, 0.6),
+    0 0 25px rgba(0, 255, 204, 0.5),
+    0 0 40px rgba(0, 255, 204, 0.3);
+  transform: translateY(-2px);
+}
+
+@keyframes neon-breathe {
+  0%, 100% {
+    box-shadow: var(--shadow-teal-glow);
+  }
+  50% {
+    box-shadow:
+      0 0 8px rgba(0, 255, 204, 0.5),
+      0 0 20px rgba(0, 255, 204, 0.4),
+      0 0 35px rgba(0, 255, 204, 0.25);
+  }
+}
+
+/* Secondary buttons */
+[data-theme="rave"] .btn-secondary {
+  background: transparent;
+  border: 2px solid var(--color-teal);
+  color: var(--color-teal);
+}
+
+[data-theme="rave"] .btn-secondary:hover:not(:disabled) {
+  background: rgba(0, 255, 204, 0.1);
+  box-shadow: var(--shadow-teal-glow);
+}
+
+/* Danger buttons */
+[data-theme="rave"] .btn-danger {
+  background: linear-gradient(135deg, var(--color-red) 0%, #cc2255 100%);
+  box-shadow: var(--shadow-red-glow);
+}
+
+[data-theme="rave"] .btn-danger:hover:not(:disabled) {
+  box-shadow:
+    0 0 10px rgba(255, 45, 106, 0.6),
+    0 0 25px rgba(255, 45, 106, 0.5),
+    0 0 40px rgba(255, 45, 106, 0.3);
+}
+
+/* Ghost buttons */
+[data-theme="rave"] .btn-ghost {
+  border-color: rgba(224, 224, 255, 0.3);
+  color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .btn-ghost:hover:not(:disabled) {
+  background: rgba(224, 224, 255, 0.1);
+  border-color: var(--color-charcoal);
+  box-shadow: 0 0 15px rgba(224, 224, 255, 0.15);
+}
+
+/* Form inputs */
+[data-theme="rave"] .form-input {
+  background: rgba(20, 20, 35, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .form-input:hover:not(:focus) {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(25, 25, 40, 0.95);
+}
+
+[data-theme="rave"] .form-input:focus {
+  border-color: var(--color-teal);
+  box-shadow: 0 0 0 3px rgba(0, 255, 204, 0.2), var(--shadow-teal-glow);
+}
+
+[data-theme="rave"] .form-input::placeholder {
+  color: var(--color-gray);
+}
+
+/* Tags */
+[data-theme="rave"] .tag {
+  background: rgba(0, 255, 136, 0.2);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  color: var(--color-mint);
+}
+
+[data-theme="rave"] .tag:hover {
+  background: rgba(0, 255, 136, 0.3);
+  border-color: var(--color-mint);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+}
+
+[data-theme="rave"] .tag.vegan {
+  background: rgba(0, 255, 204, 0.25);
+  border: 1px solid rgba(0, 255, 204, 0.5);
+  color: var(--color-teal);
+}
+
+/* Toast notifications */
+[data-theme="rave"] .toast {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="rave"] .toast.success {
+  background: linear-gradient(135deg, rgba(0, 255, 204, 0.95) 0%, rgba(0, 204, 170, 0.95) 100%);
+  box-shadow: var(--shadow-md), var(--shadow-teal-glow);
+  color: #0a0a0f;
+}
+
+[data-theme="rave"] .toast.error {
+  background: linear-gradient(135deg, rgba(255, 45, 106, 0.95) 0%, rgba(204, 34, 85, 0.95) 100%);
+  box-shadow: var(--shadow-md), var(--shadow-red-glow);
+}
+
+[data-theme="rave"] .toast.warning {
+  background: linear-gradient(135deg, rgba(255, 255, 0, 0.9) 0%, rgba(255, 200, 0, 0.9) 100%);
+  box-shadow: var(--shadow-md), var(--shadow-mustard-glow);
+  color: #0a0a0f;
+}
+
+[data-theme="rave"] .toast.info {
+  background: linear-gradient(135deg, rgba(0, 170, 255, 0.95) 0%, rgba(0, 136, 204, 0.95) 100%);
+  box-shadow: var(--shadow-md), 0 0 15px rgba(0, 170, 255, 0.4);
+}
+
+/* Command palette */
+[data-theme="rave"] .command-palette-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="rave"] .command-palette {
+  background: linear-gradient(135deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 25, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-xl), 0 0 30px rgba(191, 0, 255, 0.2);
+}
+
+[data-theme="rave"] .command-palette-input {
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .command-palette-item:hover,
+[data-theme="rave"] .command-palette-item.selected {
+  background: rgba(0, 255, 204, 0.1);
+}
+
+/* Modals and overlays */
+[data-theme="rave"] .modal-overlay,
+[data-theme="rave"] .decay-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+[data-theme="rave"] .modal-dialog,
+[data-theme="rave"] .decay-dialog {
+  background: linear-gradient(135deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 25, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-xl), var(--shadow-purple-glow);
+}
+
+[data-theme="rave"] .decay-title {
+  background: linear-gradient(135deg, var(--color-red) 0%, #cc2255 100%);
+}
+
+/* Collapsible header */
+[data-theme="rave"] .collapsible-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Day cards */
+[data-theme="rave"] .day-card.drop-target {
+  border: 2px dashed var(--color-teal);
+  background: linear-gradient(135deg, rgba(0, 255, 204, 0.1) 0%, rgba(0, 204, 170, 0.05) 100%);
+}
+
+[data-theme="rave"] .day-card.drag-over {
+  border-color: var(--color-red);
+  background: linear-gradient(135deg, rgba(255, 45, 106, 0.15) 0%, rgba(204, 34, 85, 0.1) 100%);
+  box-shadow: var(--shadow-red-glow);
+}
+
+/* Celebration overlay */
+[data-theme="rave"] .celebration-overlay {
+  background: rgba(10, 10, 15, 0.95);
+}
+
+[data-theme="rave"] .celebration-title {
+  color: var(--color-teal);
+  text-shadow:
+    0 0 10px var(--color-teal),
+    0 0 30px rgba(0, 255, 204, 0.6);
+}
+
+/* Filter bar */
+[data-theme="rave"] .filter-bar {
+  background: rgba(10, 10, 15, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+[data-theme="rave"] .filter-chip {
+  background: rgba(25, 25, 40, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .filter-chip:hover {
+  border-color: var(--color-red);
+  background: rgba(255, 45, 106, 0.1);
+}
+
+[data-theme="rave"] .filter-chip.active {
+  border-color: var(--color-teal);
+  background: var(--color-teal);
+  color: #0a0a0f;
+  box-shadow: var(--shadow-teal-glow);
+}
+
+/* View toggle */
+[data-theme="rave"] .view-toggle {
+  background: rgba(25, 25, 40, 0.9);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="rave"] .view-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="rave"] .view-toggle-btn.active {
+  background: var(--color-teal);
+  color: #0a0a0f;
+}
+
+/* About panel */
+[data-theme="rave"] .story-link {
+  color: rgba(224, 224, 255, 0.4);
+}
+
+[data-theme="rave"] .story-link:hover {
+  color: var(--color-charcoal);
+}
+
+/* Keyboard hints */
+[data-theme="rave"] .kbd {
+  background: rgba(30, 30, 50, 0.9);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--color-charcoal);
+}
+
+/* Full menu page title */
+[data-theme="rave"] .full-menu-title {
+  color: var(--color-red);
+  text-shadow:
+    0 0 10px var(--color-red),
+    0 0 30px rgba(255, 45, 106, 0.4);
+}
+
+/* Recipe detail */
+[data-theme="rave"] .recipe-detail-new {
+  background: linear-gradient(135deg, rgba(25, 25, 40, 0.98) 0%, rgba(15, 15, 25, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="rave"] .recipe-header {
+  border-bottom-color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .setup-box {
+  background: rgba(15, 15, 25, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="rave"] .task-section {
+  border-left-color: var(--color-teal);
+}
+
+/* Nutrition label */
+[data-theme="rave"] .nutrition-label {
+  background: rgba(20, 20, 35, 0.95);
+  border-color: var(--color-charcoal);
+}
+
+[data-theme="rave"] .nutrition-label-header {
+  background: linear-gradient(135deg, var(--color-purple) 0%, #9900cc 100%);
+}
+
+/* Board view */
+[data-theme="rave"] .board-column {
+  background: rgba(20, 20, 35, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="rave"] .board-column-header {
+  background: linear-gradient(135deg, rgba(191, 0, 255, 0.2) 0%, rgba(0, 170, 255, 0.2) 100%);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Fade edges */
+[data-theme="rave"] .board-fade-left {
+  background: linear-gradient(to right, #0a0a0f, transparent);
+}
+
+[data-theme="rave"] .board-fade-right {
+  background: linear-gradient(to left, #0a0a0f, transparent);
+}
+
+/* Batch dialog */
+[data-theme="rave"] .batch-dialog {
+  background: var(--color-cream);
+}
+
+[data-theme="rave"] .batch-dialog-header {
+  background: rgba(20, 20, 35, 0.95);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="rave"] .batch-progress-fill {
+  background: linear-gradient(90deg, var(--color-teal) 0%, var(--color-mint) 100%);
+  box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+}
+
+/* Skeleton loaders */
+[data-theme="rave"] .skeleton {
+  background: linear-gradient(90deg,
+    rgba(40, 40, 60, 0.8) 25%,
+    rgba(60, 60, 80, 0.8) 50%,
+    rgba(40, 40, 60, 0.8) 75%);
+}
+
+/* Login page */
+[data-theme="rave"] .login-page {
+  background: radial-gradient(ellipse at 50% 30%, #1a1a2e 0%, #0a0a0f 70%);
+}
+
+[data-theme="rave"] .login-logo {
+  color: var(--color-teal);
+  text-shadow:
+    0 0 10px var(--color-teal),
+    0 0 30px rgba(0, 255, 204, 0.6);
+}
+
+/* Ambient pulse animation for background */
+[data-theme="rave"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 20%, rgba(191, 0, 255, 0.05) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 80%, rgba(0, 255, 204, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  animation: rave-ambient-pulse 4s ease-in-out infinite;
+  z-index: -1;
+}
+
+@keyframes rave-ambient-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ========================================
+   RAVE MODE TRANSITIONS
+   ======================================== */
+
+/* Transition ON: Lights Out, Rave Begins */
+.rave-transition-on {
+  animation: rave-blackout 400ms var(--ease-smooth) forwards;
+}
+
+.rave-transition-on * {
+  transition-duration: 0ms !important;
+}
+
+@keyframes rave-blackout {
+  0% {
+    filter: brightness(1) saturate(1);
+  }
+  15% {
+    filter: brightness(1.5) saturate(0.5);
+  }
+  30% {
+    filter: brightness(0.1) saturate(0);
+  }
+  100% {
+    filter: brightness(1) saturate(1);
+  }
+}
+
+/* After blackout, neon elements flicker on */
+[data-theme="rave"] .logo,
+[data-theme="rave"] .btn-primary,
+[data-theme="rave"] .neon-sign-toggle {
+  animation: neon-flicker-on 600ms ease-out 400ms both;
+}
+
+@keyframes neon-flicker-on {
+  0% { opacity: 0; }
+  10% { opacity: 0.8; }
+  20% { opacity: 0.2; }
+  30% { opacity: 0.9; }
+  40% { opacity: 0.4; }
+  50% { opacity: 1; }
+  60% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Transition OFF: Morning Light Returns */
+.rave-transition-off {
+  animation: morning-warmup 800ms var(--ease-smooth) forwards;
+}
+
+@keyframes morning-warmup {
+  0% {
+    filter: brightness(0.8) saturate(1.2) sepia(0);
+  }
+  30% {
+    filter: brightness(0.6) saturate(0.5) sepia(0.3);
+  }
+  60% {
+    filter: brightness(1.1) saturate(0.8) sepia(0.2);
+  }
+  100% {
+    filter: brightness(1) saturate(1) sepia(0);
+  }
+}
+
+/* ========================================
+   REDUCED MOTION PREFERENCES
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="rave"] .header .logo,
+  [data-theme="rave"] .btn-primary,
+  [data-theme="rave"] body::before {
+    animation: none;
+  }
+
+  .rave-transition-on,
+  .rave-transition-off {
+    animation: none;
+  }
+
+  [data-theme="rave"] .neon-sign-toggle.rave-active .neon-dot {
+    animation: none;
+  }
+}

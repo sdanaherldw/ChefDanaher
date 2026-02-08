@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../UI/Button';
+import { useRaveMode } from '../../hooks/useRaveMode';
 
 interface HeaderProps {
   onSettingsClick?: () => void;
@@ -150,6 +151,7 @@ function AboutPanel({ onClose }: { onClose: () => void }) {
 export function Header({ onSettingsClick, onFullMenuClick, onLogoClick, showSettings = true, showFullMenu = true }: HeaderProps) {
   const { user, logout } = useAuth();
   const [showAbout, setShowAbout] = useState(false);
+  const { isRaveMode, toggleRaveMode, isTransitioning } = useRaveMode();
 
   const handleLogoClick = () => {
     if (onLogoClick) {
@@ -199,6 +201,16 @@ export function Header({ onSettingsClick, onFullMenuClick, onLogoClick, showSett
                 <Button variant="ghost" onClick={logout}>
                   Clock Out
                 </Button>
+                <button
+                  className={`neon-sign-toggle ${isRaveMode ? 'rave-active' : ''}`}
+                  onClick={toggleRaveMode}
+                  disabled={isTransitioning}
+                  aria-label={isRaveMode ? 'Switch to day mode' : 'Switch to night mode'}
+                  title={isRaveMode ? 'Open the diner' : 'Close the diner'}
+                >
+                  <span className="neon-dot" />
+                  <span className="neon-text">{isRaveMode ? 'CLOSED' : 'OPEN'}</span>
+                </button>
               </>
             )}
           </nav>

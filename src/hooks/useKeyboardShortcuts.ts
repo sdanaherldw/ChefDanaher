@@ -61,45 +61,6 @@ export function useKeyboardShortcuts({ enabled = true, shortcuts }: UseKeyboardS
   }, [handleKeyDown]);
 }
 
-// Konami code detector
-export function useKonamiCode(callback: () => void) {
-  const sequence = useRef<string[]>([]);
-  const konamiCode = [
-    'ArrowUp', 'ArrowUp',
-    'ArrowDown', 'ArrowDown',
-    'ArrowLeft', 'ArrowRight',
-    'ArrowLeft', 'ArrowRight',
-    'b', 'a'
-  ];
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      sequence.current.push(event.key);
-
-      // Keep only the last 10 keys
-      if (sequence.current.length > 10) {
-        sequence.current = sequence.current.slice(-10);
-      }
-
-      // Check if sequence matches
-      const matches = sequence.current.every(
-        (key, index) => key.toLowerCase() === konamiCode[index].toLowerCase()
-      );
-
-      if (matches && sequence.current.length === 10) {
-        sequence.current = [];
-        callback();
-      }
-    },
-    [callback]
-  );
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-}
-
 // Track repeated clicks on an element
 export function useRepeatedClicks(threshold: number, callback: () => void) {
   const clickCount = useRef(0);

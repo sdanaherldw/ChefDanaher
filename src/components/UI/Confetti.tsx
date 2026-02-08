@@ -10,7 +10,7 @@ interface ConfettiPiece {
   shape: 'circle' | 'square' | 'fork' | 'knife';
 }
 
-const COLORS = [
+const DINER_COLORS = [
   'var(--color-red)',
   'var(--color-teal)',
   'var(--color-mustard)',
@@ -18,11 +18,27 @@ const COLORS = [
   'var(--color-coral)',
 ];
 
+const RAVE_COLORS = [
+  '#ff2d6a',  // hot pink
+  '#00ffcc',  // electric cyan
+  '#bf00ff',  // deep violet
+  '#00ff88',  // neon green
+  '#ffff00',  // electric yellow
+  '#00aaff',  // electric blue
+  '#ff6b35',  // orange neon
+];
+
+function isRaveMode(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.getAttribute('data-theme') === 'rave';
+}
+
 function generateConfetti(count: number): ConfettiPiece[] {
+  const colors = isRaveMode() ? RAVE_COLORS : DINER_COLORS;
   return Array.from({ length: count }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
-    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    color: colors[Math.floor(Math.random() * colors.length)],
     delay: Math.random() * 0.5,
     rotation: Math.random() * 360,
     shape: ['circle', 'square', 'fork', 'knife'][Math.floor(Math.random() * 4)] as ConfettiPiece['shape'],

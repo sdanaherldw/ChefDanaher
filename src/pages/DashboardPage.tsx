@@ -28,7 +28,7 @@ import { KeyboardShortcutsModal } from '../components/UI/KeyboardShortcutsModal'
 import { CelebrationOverlay } from '../components/UI/Confetti';
 import { DinerSpinner } from '../components/UI/DinerSpinner';
 import { FullMenuPage } from './FullMenuPage';
-import { useKeyboardShortcuts, useKonamiCode } from '../hooks/useKeyboardShortcuts';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import { useAppState } from '../context/AppContext';
 import type { Recipe, DragData, DropData } from '../types';
 
@@ -57,15 +57,6 @@ export function DashboardPage() {
   const [celebrationMessage, setCelebrationMessage] = useState({ title: '', message: '' });
 
   const recipeListRef = useRef<RecipeListRef>(null);
-
-  // Konami code easter egg
-  useKonamiCode(() => {
-    addToast("Diner After Dark mode activated!", 'info');
-    document.body.classList.add('theme-neon');
-    setTimeout(() => {
-      document.body.classList.remove('theme-neon');
-    }, 60000); // Lasts 1 minute
-  });
 
   // Check if all days are planned (for celebration)
   const allDaysPlanned = useMemo(() => {
