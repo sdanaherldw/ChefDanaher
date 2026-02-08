@@ -548,7 +548,7 @@ async function handleRequest(request: Request, context: Context) {
           ],
           response_format: { type: 'json_object' },
           temperature: OPENAI_CONFIG.temperature.mealPlan,
-          max_tokens: OPENAI_CONFIG.maxTokens.mealPlan,
+          max_completion_tokens: OPENAI_CONFIG.maxTokens.mealPlan,
         });
         response = { output_text: completion.choices[0]?.message?.content };
       } catch (apiError) {

@@ -405,7 +405,7 @@ export default async function handler(request: Request, context: Context) {
           ],
           response_format: { type: 'json_object' },
           temperature: OPENAI_CONFIG.temperature.batchRecipe,
-          max_tokens: OPENAI_CONFIG.maxTokens.batchRecipe,
+          max_completion_tokens: OPENAI_CONFIG.maxTokens.batchRecipe,
         });
 
         let content = response.choices[0]?.message?.content;

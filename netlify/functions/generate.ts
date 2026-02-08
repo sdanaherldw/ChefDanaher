@@ -430,7 +430,7 @@ export default async function handler(request: Request, context: Context) {
           ],
           response_format: { type: 'json_object' },
           temperature: OPENAI_CONFIG.temperature.singleRecipe,
-          max_tokens: OPENAI_CONFIG.maxTokens.singleRecipe,
+          max_completion_tokens: OPENAI_CONFIG.maxTokens.singleRecipe,
         });
 
         let content = response.choices[0]?.message?.content;
