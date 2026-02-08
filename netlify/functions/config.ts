@@ -6,8 +6,8 @@
 export const OPENAI_CONFIG = {
   // PRIMARY MODEL - Change this ONE place to switch all functions
   models: {
-    primary: 'gpt-5.2',          // Latest model - best quality
-    fallback: 'gpt-5.1',         // Fallback - still excellent
+    primary: 'gpt-4o',           // Most capable, fast model
+    fallback: 'gpt-4-turbo',     // Fallback - reliable
   },
 
   // Token limits by function type
